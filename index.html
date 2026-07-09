@@ -162,6 +162,10 @@ button{font-family:inherit; cursor:pointer;}
 .msg-row.out .bubble{ background:var(--bubble-out); color:var(--bubble-out-text); border-bottom-right-radius:4px; }
 .bubble .t{font-size:10px; opacity:.6; margin-top:4px; text-align:right; display:flex; align-items:center; justify-content:flex-end; gap:6px;}
 .bubble.flagged{ border:1.5px solid var(--coral); }
+.bubble.has-image{ padding:6px; }
+.msg-image{ max-width:240px; max-height:320px; width:100%; border-radius:12px; display:block; cursor:pointer; object-fit:cover; }
+.bubble.has-image .t{ padding:4px 6px 0; }
+.image-viewer img{ width:100%; border-radius:12px; display:block; }
 .msg-del-btn{ opacity:0; border:none; background:none; cursor:pointer; font-size:11px; padding:0 2px; color:inherit; }
 .msg-row:hover .msg-del-btn{ opacity:.7; }
 .msg-del-btn:hover{ opacity:1 !important; }
@@ -595,6 +599,17 @@ const CONFIG = {
   PROXY_URL: "https://saarthi-proxy.saandeepkishore.workers.dev", // e.g. "https://saarthi-proxy.yourname.workers.dev"
 };
 function groqConfigured(){ return !!CONFIG.PROXY_URL; }
+
+/* ================================================================
+   CONFIG #3 — ImgBB (free image hosting for photo sharing, no card needed)
+   ================================================================
+   1. Go to https://api.imgbb.com/ -> click "Get API Key" -> sign up
+      free with just an email (no credit card, ever).
+   2. Copy the API key it gives you -> paste it below, replacing the
+      placeholder.
+   ================================================================ */
+const IMGBB_API_KEY = "612a95f423b82c14caaf83f3744aa3ec";
+function imgbbConfigured(){ return IMGBB_API_KEY && !IMGBB_API_KEY.startsWith("PASTE_"); }
 
 let firebaseReady = false;
 let db = null;
@@ -1245,6 +1260,8 @@ function renderChatWindow(){
       <div class="composer-row">
         <button class="icon-btn" title="Emoji" onclick="toggleEmojiPicker()">😀</button>
         <button class="icon-btn" title="AI emoji suggestions for this conversation" onclick="toggleStickerPanel()">🎨</button>
+        <button class="icon-btn" title="Send a photo" onclick="triggerImagePick()">🖼️</button>
+        <input type="file" id="image-input" accept="image/*" style="display:none" onchange="handleImagePick(event)">
         <textarea id="compose-input" rows="1" placeholder="Message ${name}" oninput="onComposeInput(this)" onkeydown="onComposeKey(event)"></textarea>
         <button class="icon-btn send-btn" title="Send" onclick="sendMessage()">➤</button>
       </div>
@@ -1355,9 +1372,11 @@ function subscribeToMessages(chatId){
         row.className = 'msg-row ' + (mine ? 'out':'in');
         const t = m.sentAt?.toDate ? m.sentAt.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'sending…';
         const senderLabel = (c && c.isGroup && !mine) ? `<b style="font-size:11.5px; display:block; color:var(--teal); margin-bottom:2px;">${(c.participantNames||{})[m.from]||m.from}</b>` : '';
-        const body = m.deletedForEveryone ? `<i>This message was deleted</i>` : escapeHtml(m.text);
+        const body = m.deletedForEveryone ? `<i>This message was deleted</i>`
+          : m.imageUrl ? `<img src="${escapeHtml(m.imageUrl)}" class="msg-image" alt="Photo" onclick="openImageViewer('${attrStr(m.imageUrl)}')">`
+          : escapeHtml(m.text);
         const delBtn = m.deletedForEveryone ? '' : `<button class="msg-del-btn" title="Delete" onclick="openMessageActions('${chatId}','${doc.id}', ${mine})">🗑</button>`;
-        row.innerHTML = `<div class="bubble ${m.flagged?'flagged':''} ${m.deletedForEveryone?'deleted':''}">${senderLabel}${body}<div class="t">${t}${delBtn}</div></div>`;
+        row.innerHTML = `<div class="bubble ${m.imageUrl?'has-image':''} ${m.flagged?'flagged':''} ${m.deletedForEveryone?'deleted':''}">${senderLabel}${body}<div class="t">${t}${delBtn}</div></div>`;
         if(!m.deletedForEveryone) attachMessageLongPress(row, chatId, doc.id, mine);
         box.appendChild(row);
         if(m.flagged){
@@ -1518,6 +1537,73 @@ async function sendMessage(){
     console.error('send failed', e);
     alert("Message couldn't be sent — check your Firebase connection.");
   }
+}
+
+/* ---------------- image sharing (any image, picked from the phone/computer's
+   camera or gallery via the native file/photo picker triggered from inside
+   Saarthi) — uploaded to ImgBB (free image host), then sent as a normal
+   message with an imageUrl field. ---------------- */
+function triggerImagePick(){
+  const inp = document.getElementById('image-input');
+  if(inp) inp.click();
+}
+async function handleImagePick(e){
+  const file = e.target.files && e.target.files[0];
+  e.target.value = ''; // reset so picking the same file twice still fires change
+  if(!file || !currentChat) return;
+  if(!file.type || !file.type.startsWith('image/')){ alert('Please choose an image file.'); return; }
+  const MAX_BYTES = 10 * 1024 * 1024;
+  if(file.size > MAX_BYTES){ alert("That image is too large — please pick one under 10MB."); return; }
+  if(!firebaseReady){ alert("Connect Firebase first — see FIREBASE_CONFIG — photo sharing needs it to send the message."); return; }
+  if(!imgbbConfigured()){ alert("Add a free ImgBB API key first — see CONFIG #3 (IMGBB_API_KEY) near the top of the script — photo sharing needs it."); return; }
+  const chatId = currentChat;
+  const box = document.getElementById('messages-box');
+  const tempId = 'up-' + Date.now();
+  if(box){
+    const row = document.createElement('div');
+    row.className = 'msg-row out'; row.id = tempId;
+    row.innerHTML = `<div class="bubble"><i>Sending photo…</i></div>`;
+    box.appendChild(row); box.scrollTop = box.scrollHeight;
+  }
+  try {
+    const base64 = await fileToBase64(file);
+    const form = new FormData();
+    form.append('key', IMGBB_API_KEY);
+    form.append('image', base64);
+    const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: form });
+    const data = await res.json();
+    if(!data || !data.success) throw new Error(data?.error?.message || 'ImgBB upload failed');
+    const url = data.data.url;
+    await db.collection('chats').doc(chatId).collection('messages').add({
+      from: phoneId(currentUser.phone), text: '', imageUrl: url,
+      sentAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    await db.collection('chats').doc(chatId).set({
+      lastMessage: '📷 Photo', lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+      hiddenFor: [],
+    }, { merge:true });
+  } catch(err) {
+    console.error('image send failed', err);
+    alert("Couldn't send that photo — check your ImgBB API key and internet connection.");
+  } finally {
+    const el = document.getElementById(tempId);
+    if(el) el.remove();
+  }
+}
+/* Reads a File as base64 (no "data:image/...;base64," prefix) — the format
+   ImgBB's API expects for the "image" field. */
+function fileToBase64(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(String(reader.result).split(',')[1] || '');
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function openImageViewer(url){
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="image-viewer"><img src="${url}" alt="Photo"></div>`);
 }
 
 /* ---------------- smart replies (real, based on the real last message) ---------------- */
@@ -1684,6 +1770,44 @@ async function getCallMediaStream(video){
   }
 }
 
+/* ---------------- ringtone (synthesized with Web Audio — no external audio
+   file/hosting needed). 'incoming' rings for the person receiving a call,
+   'outgoing' plays a ringback tone for the person who placed the call, while
+   it's waiting to be answered. Always stopped via stopRingtone() the moment
+   the call is answered, declined, cancelled, or ended. ---------------- */
+let ringAudioCtx = null, ringInterval = null;
+function startRingtone(kind){
+  stopRingtone();
+  try {
+    ringAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(ringAudioCtx.state === 'suspended') ringAudioCtx.resume();
+  } catch(e) { return; }
+  const playBurst = ()=>{
+    if(!ringAudioCtx) return;
+    if(ringAudioCtx.state === 'suspended') ringAudioCtx.resume();
+    const ctx = ringAudioCtx, now = ctx.currentTime;
+    const beeps = kind === 'incoming' ? [0, 0.42] : [0]; // double-ring in, single ringback out
+    beeps.forEach(offset=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = kind === 'incoming' ? 440 : 480;
+      gain.gain.setValueAtTime(0, now + offset);
+      gain.gain.linearRampToValueAtTime(0.16, now + offset + 0.02);
+      gain.gain.setValueAtTime(0.16, now + offset + (kind==='incoming' ? 0.3 : 0.9));
+      gain.gain.linearRampToValueAtTime(0, now + offset + (kind==='incoming' ? 0.36 : 1.0));
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(now + offset); osc.stop(now + offset + (kind==='incoming' ? 0.4 : 1.05));
+    });
+  };
+  playBurst();
+  ringInterval = setInterval(playBurst, kind === 'incoming' ? 1800 : 3000);
+}
+function stopRingtone(){
+  if(ringInterval){ clearInterval(ringInterval); ringInterval = null; }
+  if(ringAudioCtx){ try{ ringAudioCtx.close(); }catch(e){} ringAudioCtx = null; }
+}
+
 function listenForIncomingCalls(){
   if(!firebaseReady) return;
   if(incomingCallUnsub) incomingCallUnsub();
@@ -1705,8 +1829,21 @@ function showIncomingCallToast(callId, call){
       <button class="chip-btn ghost" onclick="declineCall('${callId}'); this.closest('.toast').remove();">Decline</button>
     </div>`;
   document.body.appendChild(toast);
+  startRingtone('incoming');
+  // Stop ringing (and clear the toast) the moment the call stops being 'ringing' —
+  // covers accept/decline here, and the caller cancelling before we respond.
+  const watcher = db.collection('calls').doc(callId).onSnapshot(snap=>{
+    const d = snap.data();
+    if(!d || d.status !== 'ringing'){
+      stopRingtone();
+      watcher();
+      const t = document.getElementById('incoming-'+callId);
+      if(t) t.remove();
+    }
+  });
 }
 async function declineCall(callId){
+  stopRingtone();
   await db.collection('calls').doc(callId).set({
     status:'declined', durationSec:0, endedAt: firebase.firestore.FieldValue.serverTimestamp(),
   }, {merge:true});
@@ -1746,6 +1883,7 @@ async function startCall(chatId, video){
   });
   activeCallId = callRef.id; callRole = 'caller';
   openCallModal(toName, video);
+  startRingtone('outgoing');
   setupPeerConnection(callRef.id, 'caller');
   localStream.getTracks().forEach(t=>pc.addTrack(t, localStream));
   const localVideo = document.getElementById('local-video');
@@ -1757,6 +1895,7 @@ async function startCall(chatId, video){
     const data = snap.data();
     if(!data) return;
     if(data.answer && pc.currentRemoteDescription===null){
+      stopRingtone();
       pc.setRemoteDescription(new RTCSessionDescription(data.answer));
       activeSince = Date.now();
     }
@@ -1772,6 +1911,7 @@ async function answerCall(callId){
   const snap = await ref.get();
   const call = snap.data();
   if(!call) return;
+  stopRingtone();
   localStream = await getCallMediaStream(!!call.video);
   if(!localStream) return;
   activeCallId = callId; callRole = 'callee';
@@ -1824,6 +1964,7 @@ function startCaptioning(otherName){
   } catch(e) { console.warn("Captioning unavailable:", e); }
 }
 async function endCall(){
+  stopRingtone();
   if(captionRecorder && captionRecorder.state !== 'inactive') captionRecorder.stop();
   if(pc){ pc.close(); pc = null; }
   if(localStream){ localStream.getTracks().forEach(t=>t.stop()); localStream = null; }
