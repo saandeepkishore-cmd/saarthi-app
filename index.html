@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saarthi — Your conversations, understood.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --marigold:#F2A93B; --marigold-dim:#c98f2c; --teal:#2BB3A3; --coral:#E8604C;
+  --radius:16px;
+}
+[data-theme="light"]{
+  --bg:#F6F1E8; --bg2:#FFFFFF; --bg3:#FBF8F1; --text:#14213D; --text-dim:#6b7385;
+  --border:#E7E0D2; --bubble-in:#FFFFFF; --bubble-out:#14213D; --bubble-out-text:#F6F1E8;
+  --shadow:0 8px 24px rgba(20,33,61,0.08); --rail:#14213D; --rail-text:#cfd6e6;
+}
+[data-theme="dark"]{
+  --bg:#0E1524; --bg2:#161F33; --bg3:#1C2740; --text:#EFEAE0; --text-dim:#8D96AC;
+  --border:#2A3652; --bubble-in:#1C2740; --bubble-out:#F2A93B; --bubble-out-text:#14213D;
+  --shadow:0 8px 24px rgba(0,0,0,0.35); --rail:#0A0F1C; --rail-text:#8D96AC;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0; background:var(--bg); color:var(--text); font-family:'Manrope',sans-serif;
+  transition:background .5s ease, color .5s ease; overflow:hidden;
+}
+.serif{font-family:'Newsreader',serif;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+button{font-family:inherit; cursor:pointer;}
+::-webkit-scrollbar{width:6px; height:6px;}
+::-webkit-scrollbar-thumb{background:var(--border); border-radius:10px;}
+
+/* ---------- theme transition reveal ---------- */
+#theme-reveal{
+  position:fixed; z-index:9999; border-radius:50%; pointer-events:none;
+  transform:translate(-50%,-50%); width:0; height:0; opacity:0;
+}
+#theme-reveal.active{ animation:revealPulse .6s ease forwards; }
+@keyframes revealPulse{
+  0%{ width:0; height:0; opacity:.9; }
+  100%{ width:2600px; height:2600px; opacity:0; }
+}
+
+/* ---------- onboarding ---------- */
+#onboard{
+  position:fixed; inset:0; z-index:500; background:linear-gradient(160deg,#14213D,#0A1122);
+  display:flex; align-items:center; justify-content:center; color:#F6F1E8;
+  transition:opacity .5s ease, visibility .5s ease;
+}
+#onboard.hidden{opacity:0; visibility:hidden; pointer-events:none;}
+#account-gate.show-gate{opacity:1 !important; visibility:visible !important;}
+.ob-card{max-width:480px; padding:40px; text-align:center;}
+.ob-mark{width:64px; height:64px; margin:0 auto 22px;}
+.ob-title{font-size:30px; margin:0 0 6px;}
+.ob-tag{color:var(--marigold); font-style:italic; margin:0 0 32px; font-size:16px;}
+.ob-slide{display:none; animation:fadeUp .5s ease;}
+.ob-slide.active{display:block;}
+@keyframes fadeUp{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+.ob-icon{font-size:34px; margin-bottom:14px;}
+.ob-headline{font-size:20px; margin:0 0 10px; font-family:'Newsreader',serif;}
+.ob-desc{font-size:14.5px; color:#c7cfe0; line-height:1.6; min-height:66px;}
+.ob-dots{display:flex; gap:7px; justify-content:center; margin:26px 0 22px;}
+.ob-dot{width:7px; height:7px; border-radius:50%; background:#3a4666; transition:all .3s;}
+.ob-dot.active{background:var(--marigold); width:20px; border-radius:4px;}
+.ob-actions{display:flex; gap:12px; justify-content:center;}
+.btn{border:none; border-radius:10px; padding:11px 22px; font-weight:700; font-size:14px; transition:transform .15s ease, opacity .15s;}
+.btn:active{transform:scale(.96);}
+.btn-primary{background:var(--marigold); color:#14213D;}
+.btn-ghost{background:transparent; color:#c7cfe0; border:1px solid #3a4666 !important;}
+
+/* ---------- app shell ---------- */
+#app{ display:none; height:100vh; height:100dvh; }
+#app.ready{ display:flex; }
+.rail{
+  width:74px; background:var(--rail); display:flex; flex-direction:column; align-items:center;
+  padding:20px 0; flex-shrink:0; transition:background .5s ease;
+}
+.rail-logo{width:34px; height:34px; margin-bottom:26px;}
+.rail-nav{display:flex; flex-direction:column; gap:6px; flex:1;}
+.rail-btn{
+  width:46px; height:46px; border-radius:12px; background:transparent; border:none; color:var(--rail-text);
+  display:flex; align-items:center; justify-content:center; font-size:19px; transition:all .2s;
+}
+.rail-btn:hover{background:rgba(255,255,255,0.06);}
+.rail-btn.active{background:var(--marigold); color:#14213D;}
+.theme-toggle{
+  width:46px; height:26px; border-radius:20px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.15);
+  position:relative; margin-top:auto;
+}
+.theme-toggle .knob{
+  position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%;
+  background:var(--marigold); transition:left .35s cubic-bezier(.4,1.6,.6,1); display:flex; align-items:center; justify-content:center; font-size:11px;
+}
+[data-theme="dark"] .theme-toggle .knob{ left:22px; background:#8D96AC; }
+
+.list-pane{
+  width:340px; flex-shrink:0; background:var(--bg2); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; transition:background .5s ease, border-color .5s ease;
+}
+.list-head{padding:20px 20px 12px;}
+.list-head h1{font-size:22px; margin:0 0 2px;}
+.list-head .sub{font-size:12.5px; color:var(--text-dim);}
+.search{margin:12px 20px; position:relative;}
+.search input{
+  width:100%; padding:9px 14px 9px 34px; border-radius:10px; border:1px solid var(--border);
+  background:var(--bg3); color:var(--text); font-size:13.5px; outline:none;
+}
+.search::before{content:"⌕"; position:absolute; left:12px; top:8px; color:var(--text-dim);}
+
+.smart-banner{
+  margin:0 16px 12px; padding:12px 14px; border-radius:12px; background:linear-gradient(135deg, rgba(242,169,59,.16), rgba(43,179,163,.12));
+  border:1px solid rgba(242,169,59,.35); font-size:12.5px; display:flex; gap:10px; align-items:flex-start;
+}
+.smart-banner .x{ margin-left:auto; color:var(--text-dim); background:none; border:none; }
+.smart-banner b{display:block; margin-bottom:2px; font-size:12.5px;}
+.smart-banner .act{margin-top:8px; display:flex; gap:8px;}
+.chip-btn{ background:var(--marigold); color:#14213D; border:none; padding:5px 11px; border-radius:20px; font-size:11.5px; font-weight:700;}
+.chip-btn.ghost{ background:transparent; border:1px solid var(--border); color:var(--text);}
+
+.chats{flex:1; overflow-y:auto; padding:4px 8px 12px;}
+.chat-item{
+  display:flex; gap:12px; align-items:center; padding:11px 12px; border-radius:12px; margin-bottom:2px; transition:background .15s;
+}
+.chat-item:hover, .chat-item.active{ background:var(--bg3); }
+.avatar{
+  width:44px; height:44px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+  font-weight:700; color:#fff; font-size:15px; flex-shrink:0; position:relative;
+}
+.avatar .dot{position:absolute; bottom:-1px; right:-1px; width:11px; height:11px; border-radius:50%; background:var(--teal); border:2px solid var(--bg2);}
+.chat-meta{flex:1; min-width:0;}
+.chat-meta .top{display:flex; justify-content:space-between; font-size:14px;}
+.chat-meta .name{font-weight:700;}
+.chat-meta .time{font-size:11px; color:var(--text-dim);}
+.chat-meta .preview{font-size:12.5px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;}
+.badge{background:var(--marigold); color:#14213D; font-size:10.5px; font-weight:800; border-radius:20px; padding:1px 7px; margin-left:6px;}
+
+.main-pane{flex:1; min-height:0; display:flex; flex-direction:column; min-width:0; position:relative;}
+.chat-header{
+  padding:14px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px;
+  background:var(--bg2); transition:background .5s ease, border-color .5s ease;
+}
+.chat-header .info{flex:1;}
+.chat-header .name{font-weight:700; font-size:15.5px;}
+.chat-header .status{font-size:12px; color:var(--text-dim);}
+.hbtn{
+  width:38px; height:38px; border-radius:10px; border:1px solid var(--border); background:var(--bg3); color:var(--text);
+  display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;
+}
+.hbtn:hover{background:var(--border);}
+
+.messages{flex:1; min-height:0; overflow-y:auto; padding:22px 26px; display:flex; flex-direction:column; gap:4px;}
+.msg-row{display:flex; margin-bottom:8px; animation:msgIn .28s ease;}
+@keyframes msgIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+.msg-row.out{justify-content:flex-end;}
+.bubble{
+  max-width:62%; padding:10px 14px; border-radius:16px; font-size:14.5px; line-height:1.5; position:relative; box-shadow:var(--shadow);
+}
+.msg-row.in .bubble{ background:var(--bubble-in); border-bottom-left-radius:4px; }
+.msg-row.out .bubble{ background:var(--bubble-out); color:var(--bubble-out-text); border-bottom-right-radius:4px; }
+.bubble .t{font-size:10px; opacity:.6; margin-top:4px; text-align:right; display:flex; align-items:center; justify-content:flex-end; gap:6px;}
+.bubble.flagged{ border:1.5px solid var(--coral); }
+.msg-del-btn{ opacity:0; border:none; background:none; cursor:pointer; font-size:11px; padding:0 2px; color:inherit; }
+.msg-row:hover .msg-del-btn{ opacity:.7; }
+.msg-del-btn:hover{ opacity:1 !important; }
+.msg-row.pressed .bubble{ opacity:.65; transition:opacity .1s ease; }
+.bubble.deleted{ font-style:italic; opacity:.6; }
+.chat-menu-wrap{ position:relative; }
+.chat-menu{
+  position:absolute; top:44px; right:0; background:var(--bg2); border:1px solid var(--border); border-radius:12px;
+  box-shadow:var(--shadow); min-width:200px; z-index:30; display:none; overflow:hidden;
+}
+.chat-menu.show{ display:block; }
+.chat-menu button{
+  display:block; width:100%; text-align:left; padding:11px 16px; background:none; border:none; color:var(--text);
+  font-size:13.5px; font-family:inherit;
+}
+.chat-menu button:hover{ background:var(--bg3); }
+.chat-menu button.danger{ color:var(--coral); }
+.chat-item{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+.chat-item.pressed{ background:var(--bg3); }
+.list-ctx-menu{
+  position:fixed; background:var(--bg2); border:1px solid var(--border); border-radius:12px;
+  box-shadow:var(--shadow); min-width:190px; z-index:600; overflow:hidden;
+}
+.list-ctx-menu button{
+  display:block; width:100%; text-align:left; padding:11px 16px; background:none; border:none; color:var(--text);
+  font-size:13.5px; font-family:inherit;
+}
+.list-ctx-menu button:hover{ background:var(--bg3); }
+.list-ctx-menu button.danger{ color:var(--coral); }
+.list-ctx-backdrop{ position:fixed; inset:0; z-index:590; }
+.emoji-picker{
+  display:none; grid-template-columns:repeat(8,1fr); gap:4px; max-height:180px; overflow-y:auto;
+  background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:10px; position:absolute; bottom:64px; z-index:30;
+  box-shadow:var(--shadow);
+}
+.emoji-picker.show{ display:grid; }
+.emoji-picker span{ cursor:pointer; font-size:19px; text-align:center; padding:4px; border-radius:6px; }
+.emoji-picker span:hover{ background:var(--bg3); }
+.scam-banner{
+  margin-top:60px; align-self:center; max-width:78%; background:rgba(232,96,76,.1); border:1px solid var(--coral);
+  border-radius:12px; padding:12px 16px; font-size:12.5px;
+}
+.scam-banner b{color:var(--coral);}
+.scam-banner .explain{margin-top:8px; font-size:12px; color:var(--text-dim); display:none;}
+.scam-banner .explain.show{display:block;}
+.scam-banner .row{display:flex; gap:8px; margin-top:8px;}
+
+.typing-indicator{display:flex; gap:4px; padding:10px 14px; background:var(--bubble-in); border-radius:16px; width:fit-content; box-shadow:var(--shadow);}
+.typing-indicator span{width:6px; height:6px; border-radius:50%; background:var(--text-dim); animation:bounce 1.2s infinite;}
+.typing-indicator span:nth-child(2){animation-delay:.15s;} .typing-indicator span:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0); opacity:.4;} 30%{transform:translateY(-4px); opacity:1;}}
+
+.memory-card{
+  align-self:center; max-width:70%; background:linear-gradient(135deg, rgba(43,179,163,.12), rgba(242,169,59,.1));
+  border:1px solid var(--border); border-radius:14px; padding:14px 18px; margin:10px 0 18px; font-size:12.5px; text-align:center;
+}
+.memory-card b{display:block; font-family:'Newsreader',serif; font-size:15px; margin-bottom:4px;}
+.memory-card .close{position:absolute;}
+
+.tone-guard{
+  margin:0 26px; background:var(--bg3); border:1px solid var(--marigold); border-radius:12px; padding:11px 14px;
+  font-size:12.5px; display:none; animation:fadeUp .3s ease;
+}
+.tone-guard.show{display:block;}
+.tone-guard .head{display:flex; align-items:center; gap:8px; margin-bottom:6px; font-weight:700; color:var(--marigold-dim);}
+.tone-guard .suggestion{background:var(--bg2); border-radius:8px; padding:8px 10px; margin:6px 0; font-style:italic;}
+.tone-guard .row{display:flex; gap:8px; margin-top:6px;}
+
+.replies-row{display:flex; gap:8px; padding:0 26px 10px; flex-wrap:wrap;}
+.reply-chip{
+  background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:7px 14px; border-radius:20px; font-size:13px;
+}
+.reply-chip:hover{border-color:var(--marigold);}
+
+.composer{padding:14px 26px 20px; border-top:1px solid var(--border); background:var(--bg2);}
+.composer-row{display:flex; align-items:flex-end; gap:10px;}
+.composer textarea{
+  flex:1; resize:none; border:1px solid var(--border); background:var(--bg3); color:var(--text); border-radius:14px;
+  padding:11px 14px; font-size:14.5px; font-family:inherit; outline:none; max-height:120px;
+}
+.icon-btn{
+  width:40px; height:40px; border-radius:12px; border:none; background:var(--bg3); color:var(--text-dim); font-size:17px; flex-shrink:0;
+}
+.icon-btn:hover{color:var(--marigold); background:var(--border);}
+.send-btn{background:var(--marigold); color:#14213D; font-weight:800;}
+
+.sticker-panel{display:none; gap:10px; padding:10px 0 0;}
+.sticker-panel.show{display:flex;}
+.sticker-tile{width:64px; height:64px; border-radius:12px; background:var(--bg3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:26px;}
+
+.modal-backdrop{position:fixed; inset:0; background:rgba(10,15,25,.55); display:none; align-items:center; justify-content:center; z-index:400;}
+.modal-backdrop.show{display:flex; animation:fadeUp .25s ease;}
+.modal{background:var(--bg2); border-radius:20px; padding:26px; width:420px; max-width:90vw; box-shadow:var(--shadow); max-height:80vh; overflow-y:auto;}
+.modal h3{margin:0 0 4px; font-family:'Newsreader',serif; font-size:20px;}
+.modal .sub{font-size:12.5px; color:var(--text-dim); margin-bottom:16px;}
+.topic{margin-bottom:14px;}
+.topic .th{font-weight:700; font-size:13.5px; color:var(--teal); margin-bottom:4px;}
+.topic ul{margin:0; padding-left:18px; font-size:13px; color:var(--text-dim);}
+.modal-close{float:right; background:none; border:none; font-size:18px; color:var(--text-dim);}
+
+.call-modal .video-box{
+  height:220px; border-radius:14px; background:linear-gradient(135deg,#1C2740,#0E1524); display:flex; align-items:center; justify-content:center;
+  color:#8D96AC; font-size:13px; position:relative; margin-bottom:12px;
+}
+.caption-ticker{position:absolute; bottom:10px; left:10px; right:10px; background:rgba(0,0,0,.5); color:#fff; font-size:12px; padding:6px 10px; border-radius:8px;}
+.call-actions{display:flex; gap:10px; justify-content:center; margin-top:14px;}
+.call-actions button{width:46px; height:46px; border-radius:50%; border:none; font-size:17px;}
+.summary-card{background:var(--bg3); border-radius:12px; padding:14px 16px; margin-top:12px; font-size:13px;}
+
+.status-grid{padding:20px 24px; overflow-y:auto;}
+.status-grid h2{font-family:'Newsreader',serif; margin-bottom:16px;}
+.stories{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:16px;}
+.story{display:flex; flex-direction:column; align-items:center; gap:8px;}
+.story .ring{width:64px; height:64px; border-radius:50%; padding:3px; background:conic-gradient(var(--marigold), var(--teal), var(--marigold)); display:flex; align-items:center; justify-content:center;}
+.story .ring .inner{width:100%; height:100%; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:18px; border:2px solid var(--bg);}
+.story span{font-size:11.5px; color:var(--text-dim);}
+
+.settings-wrap, .about-wrap{padding:30px 40px; overflow-y:auto; max-width:640px;}
+.settings-wrap h2, .about-wrap h2{font-family:'Newsreader',serif; margin-bottom:4px;}
+.settings-section{margin-top:26px;}
+.settings-section h4{font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-dim); margin-bottom:10px;}
+.setting-row{
+  display:flex; align-items:center; gap:14px; padding:13px 0; border-bottom:1px solid var(--border);
+}
+.setting-row .txt{flex:1;}
+.setting-row .txt b{display:block; font-size:14px;}
+.setting-row .txt span{font-size:12.5px; color:var(--text-dim);}
+.switch{width:42px; height:24px; border-radius:20px; background:var(--border); position:relative; border:none; flex-shrink:0;}
+.switch .k{position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:#fff; transition:left .25s;}
+.switch.on{background:var(--teal);}
+.switch.on .k{left:20px;}
+.about-mark{width:48px; margin-bottom:14px;}
+.about-wrap .credit{margin-top:30px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--text-dim); border-top:1px solid var(--border); padding-top:16px;}
+
+.toast{
+  position:fixed; bottom:26px; right:26px; background:var(--bg2); border:1px solid var(--border); box-shadow:var(--shadow);
+  border-radius:14px; padding:14px 18px; width:280px; z-index:600; animation:fadeUp .35s ease;
+}
+.toast b{display:block; font-size:13.5px; margin-bottom:4px;}
+.toast p{margin:0 0 10px; font-size:12.5px; color:var(--text-dim);}
+.toast .row{display:flex; gap:8px;}
+
+.mobile-back-btn{ display:none; }
+@media (max-width:700px){
+  #app.ready{ flex-direction:column; }
+  .rail{
+    width:100%; height:64px; flex-direction:row; align-items:center; justify-content:space-between;
+    padding:0 10px; order:2; flex-shrink:0;
+  }
+  .rail-logo{ width:26px; height:26px; margin-bottom:0; }
+  .rail-nav{ flex-direction:row; gap:2px; flex:1; justify-content:space-around; }
+  .rail-btn{ width:42px; height:42px; }
+  .theme-toggle{ margin-top:0; width:38px; height:22px; }
+  .theme-toggle .knob{ width:16px; height:16px; }
+  [data-theme="dark"] .theme-toggle .knob{ left:18px; }
+
+  .list-pane{ position:static; width:100%; flex:1; min-height:0; }
+  .main-pane{ width:100%; flex:1; min-height:0; }
+  .status-grid, .settings-wrap, .about-wrap{ flex:1; min-height:0; width:100%; }
+  #app.mobile-chat-open #view-chats{ display:none !important; }
+  #app:not(.mobile-chat-open) #main-chats{ display:none !important; }
+  .mobile-back-btn{ display:flex; }
+  .messages{ padding:16px; }
+  .composer{ padding:10px 12px 14px; }
+  .chat-header{ padding:12px 14px; }
+  .settings-wrap, .about-wrap{ padding:20px 18px; }
+  .modal{ width:92vw; padding:20px; }
+  .bubble{ max-width:82%; }
+}
+</style>
+</head>
+<body data-theme="light">
+
+<div id="theme-reveal"></div>
+
+<!-- ONBOARDING -->
+<div id="onboard">
+  <div class="ob-card">
+    <svg class="ob-mark" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="none" stroke="#F2A93B" stroke-width="2"/><g id="ob-spokes" stroke="#F2A93B" stroke-width="2"><line x1="32" y1="6" x2="32" y2="16"/><line x1="32" y1="48" x2="32" y2="58"/><line x1="6" y1="32" x2="16" y2="32"/><line x1="48" y1="32" x2="58" y2="32"/><line x1="13" y1="13" x2="20" y2="20"/><line x1="44" y1="44" x2="51" y2="51"/><line x1="51" y1="13" x2="44" y2="20"/><line x1="20" y1="44" x2="13" y2="51"/></g><circle cx="32" cy="32" r="8" fill="#F2A93B"/></svg>
+    <h1 class="ob-title serif">Saarthi</h1>
+    <p class="ob-tag">Your conversations, understood.</p>
+
+    <div class="ob-slide active" data-i="0">
+      <div class="ob-icon">🛡️</div>
+      <div class="ob-headline">Tone Guard has your back</div>
+      <div class="ob-desc">Before a message sends, Saarthi quietly checks if it might land harsher than you meant — and offers a softer version. You decide: accept, edit, or ignore.</div>
+    </div>
+    <div class="ob-slide" data-i="1">
+      <div class="ob-icon">🌐</div>
+      <div class="ob-headline">Translation that keeps your tone</div>
+      <div class="ob-desc">Saarthi doesn't just translate words — it adapts idioms and politeness across cultures, in chat and live on calls, so nothing gets lost in formality.</div>
+    </div>
+    <div class="ob-slide" data-i="2">
+      <div class="ob-icon">⚠️</div>
+      <div class="ob-headline">Scam Shield, watching quietly</div>
+      <div class="ob-desc">Fake KYC requests, phishing links, impersonation — flagged before you tap, with a plain-language reason why.</div>
+    </div>
+    <div class="ob-slide" data-i="3">
+      <div class="ob-icon">✨</div>
+      <div class="ob-headline">All opt-in, all yours</div>
+      <div class="ob-desc">Every AI feature can be switched off individually in Settings. Nothing personal leaves your device unless you've turned a feature on.</div>
+    </div>
+
+    <div class="ob-dots">
+      <div class="ob-dot active"></div><div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot"></div>
+    </div>
+    <div class="ob-actions">
+      <button class="btn btn-ghost" onclick="skipOnboard()">Skip</button>
+      <button class="btn btn-primary" onclick="nextOnboard()" id="ob-next-btn">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- ACCOUNT CREATION -->
+<div id="account-gate" class="hidden" style="position:fixed; inset:0; z-index:490; background:linear-gradient(160deg,#14213D,#0A1122); display:flex; align-items:center; justify-content:center; color:#F6F1E8; opacity:0; visibility:hidden; transition:opacity .5s ease, visibility .5s ease;">
+  <div class="ob-card" style="max-width:380px;">
+    <svg class="ob-mark" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="none" stroke="#F2A93B" stroke-width="2"/><circle cx="32" cy="32" r="8" fill="#F2A93B"/></svg>
+    <h1 class="ob-title serif" id="gate-title">Create your account</h1>
+    <p class="ob-tag" style="font-size:13px;" id="gate-tag">Just your name and number — nothing else.</p>
+    <div style="text-align:left; margin-top:18px;">
+      <div id="gate-name-field">
+        <label style="font-size:12px; color:#c7cfe0;">Your name</label>
+        <input id="signup-name" placeholder="e.g. Ananya Rao" style="width:100%; margin:6px 0 14px; padding:11px 13px; border-radius:10px; border:1px solid #3a4666; background:#111a2e; color:#F6F1E8; font-size:14px; outline:none;">
+      </div>
+      <label style="font-size:12px; color:#c7cfe0;">Mobile number</label>
+      <div style="display:flex; gap:6px; margin:6px 0 4px;">
+        <select id="signup-country" style="padding:11px 6px; border-radius:10px; border:1px solid #3a4666; background:#111a2e; color:#F6F1E8; font-size:13px; outline:none;">
+          <option value="93">🇦🇫 +93</option><option value="54">🇦🇷 +54</option><option value="61">🇦🇺 +61</option>
+          <option value="880">🇧🇩 +880</option><option value="32">🇧🇪 +32</option><option value="55">🇧🇷 +55</option>
+          <option value="1">🇨🇦 +1</option><option value="86">🇨🇳 +86</option><option value="20">🇪🇬 +20</option>
+          <option value="33">🇫🇷 +33</option><option value="49">🇩🇪 +49</option><option value="852">🇭🇰 +852</option>
+          <option value="91" selected>🇮🇳 +91</option><option value="62">🇮🇩 +62</option><option value="98">🇮🇷 +98</option>
+          <option value="964">🇮🇶 +964</option><option value="972">🇮🇱 +972</option><option value="39">🇮🇹 +39</option>
+          <option value="81">🇯🇵 +81</option><option value="254">🇰🇪 +254</option><option value="82">🇰🇷 +82</option>
+          <option value="60">🇲🇾 +60</option><option value="52">🇲🇽 +52</option><option value="234">🇳🇬 +234</option>
+          <option value="92">🇵🇰 +92</option><option value="63">🇵🇭 +63</option><option value="7">🇷🇺 +7</option>
+          <option value="966">🇸🇦 +966</option><option value="65">🇸🇬 +65</option><option value="27">🇿🇦 +27</option>
+          <option value="94">🇱🇰 +94</option><option value="46">🇸🇪 +46</option><option value="41">🇨🇭 +41</option>
+          <option value="66">🇹🇭 +66</option><option value="90">🇹🇷 +90</option><option value="971">🇦🇪 +971</option>
+          <option value="44">🇬🇧 +44</option><option value="1">🇺🇸 +1</option><option value="84">🇻🇳 +84</option>
+          <option value="other">🌐 Other</option>
+        </select>
+        <input id="signup-country-other" placeholder="code, e.g. 351" style="display:none; width:70px; padding:11px 8px; border-radius:10px; border:1px solid #3a4666; background:#111a2e; color:#F6F1E8; font-size:13px; outline:none;" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+        <input id="signup-phone" placeholder="e.g. 9876543210" style="flex:1; padding:11px 13px; border-radius:10px; border:1px solid #3a4666; background:#111a2e; color:#F6F1E8; font-size:14px; outline:none;">
+      </div>
+      <script>document.addEventListener('DOMContentLoaded',()=>{const s=document.getElementById('signup-country'); if(s) s.addEventListener('change',()=>{document.getElementById('signup-country-other').style.display = s.value==='other' ? 'block':'none';});});</script>
+    </div>
+    <div id="signup-error" style="color:var(--coral); font-size:12px; margin-top:6px; min-height:16px;"></div>
+    <div class="ob-actions" style="margin-top:16px;">
+      <button class="btn btn-primary" style="width:100%;" id="gate-submit-btn" onclick="gateSubmit()">Create account &amp; start chatting</button>
+    </div>
+    <p style="text-align:center; margin-top:14px; font-size:12.5px;">
+      <a href="#" id="gate-toggle-link" onclick="toggleGateMode(); return false;" style="color:var(--marigold); text-decoration:underline; cursor:pointer;">Already have an account? Log in</a>
+    </p>
+    <p style="font-size:11px; color:#7d87a3; margin-top:10px; line-height:1.5;">There's no OTP verification, so nothing confirms this number is really yours — anyone can type any name/number. Your profile is stored in this app's shared database so other people using this link can find and message you.</p>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="app">
+  <div class="rail">
+    <svg class="rail-logo" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="none" stroke="#F2A93B" stroke-width="2.5"/><g stroke="#F2A93B" stroke-width="2.5"><line x1="32" y1="6" x2="32" y2="16"/><line x1="32" y1="48" x2="32" y2="58"/><line x1="6" y1="32" x2="16" y2="32"/><line x1="48" y1="32" x2="58" y2="32"/></g><circle cx="32" cy="32" r="7" fill="#F2A93B"/></svg>
+    <div class="rail-nav">
+      <button class="rail-btn active" data-view="chats" onclick="switchView('chats',this)" title="Chats">💬</button>
+      <button class="rail-btn" data-view="calls" onclick="switchView('calls',this)" title="Calls">📞</button>
+      <button class="rail-btn" data-view="people" onclick="switchView('people',this)" title="People">👥</button>
+      <button class="rail-btn" data-view="settings" onclick="switchView('settings',this)" title="Settings">⚙️</button>
+      <button class="rail-btn" data-view="about" onclick="switchView('about',this)" title="About">ℹ️</button>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme(event)" title="Toggle theme"><div class="knob">☀</div></button>
+  </div>
+
+  <!-- CHATS VIEW -->
+  <div class="list-pane" id="view-chats">
+    <div class="list-head">
+      <h1 class="serif">Chats</h1>
+      <div class="sub">Real-time, synced across every device you sign in on</div>
+    </div>
+    <div class="search"><input placeholder="Search conversations" oninput="filterChats(this.value)"></div>
+    <div style="display:flex; gap:8px; padding:0 20px 10px;">
+      <button class="chip-btn" onclick="switchView('people', document.querySelector('[data-view=people]'))">+ New chat</button>
+      <button class="chip-btn ghost" onclick="openNewGroupModal()">+ New group</button>
+      <button class="chip-btn ghost" onclick="draftGreeting()">🪔 Greeting</button>
+    </div>
+
+    <div class="smart-banner" id="calendar-banner" style="display:none;">
+      <div style="font-size:18px;">🪔</div>
+      <div style="flex:1;">
+        <b>Greeting Assistant</b>
+        Need to send a festival or celebration greeting? Saarthi can draft one.
+        <div class="act">
+          <button class="chip-btn" onclick="draftGreeting()">Draft a greeting</button>
+          <button class="chip-btn ghost" onclick="dismiss('calendar-banner')">Not now</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="chats" id="chat-list"></div>
+  </div>
+
+  <div class="main-pane" id="main-chats">
+    <!-- filled by JS -->
+  </div>
+
+  <!-- CALLS VIEW -->
+  <div class="list-pane" id="view-calls" style="display:none; width:100%;">
+    <div class="list-head"><h1 class="serif">Calls</h1><div class="sub">Voice &amp; video, with Call Companion</div></div>
+    <div class="chats" id="calls-list" style="padding:8px 20px;"></div>
+  </div>
+
+  <!-- PEOPLE VIEW (real directory of everyone who has signed up) -->
+  <div class="status-grid" id="view-people" style="display:none; width:100%; padding:20px;">
+    <h2>People</h2>
+    <div class="sub" style="color:var(--text-dim); font-size:13px; margin-bottom:14px;">Everyone who has created an account on this app. Tap + to add someone as a contact and start chatting.</div>
+    <div class="search"><input id="people-search" placeholder="Search by name or phone number" oninput="renderPeopleList(this.value)"></div>
+    <div id="people-list" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- SETTINGS VIEW -->
+  <div class="settings-wrap" id="view-settings" style="display:none; width:100%;">
+    <h2>Settings</h2>
+    <div class="sub" style="color:var(--text-dim); font-size:13px;">Every AI feature below is opt-in and can be switched off individually.</div>
+
+    <div class="settings-section">
+      <h4>AI engine</h4>
+      <div class="setting-row"><div class="txt"><b>Status</b><span id="ai-engine-status">Checking…</span></div></div>
+      <div class="setting-row"><div class="txt"><b>Model</b><span id="ai-engine-model">—</span></div></div>
+    </div>
+
+    <div class="settings-section">
+      <h4>Presence &amp; privacy</h4>
+      <div class="setting-row"><div class="txt"><b>Read receipts</b><span>Let contacts see when you've read a message</span></div><button class="switch on" onclick="toggleSwitch(this)"><div class="k"></div></button></div>
+      <div class="setting-row"><div class="txt"><b>Typing indicator</b><span>Show "typing…" while you compose</span></div><button class="switch on" id="typing-indicator-toggle" onclick="toggleSwitch(this)"><div class="k"></div></button></div>
+      <div class="setting-row"><div class="txt"><b>Online status</b><span>Show when you're active</span></div><button class="switch on" id="online-status-toggle" onclick="toggleSwitch(this)"><div class="k"></div></button></div>
+    </div>
+
+    <div class="settings-section">
+      <h4>AI features — Tone Guard family</h4>
+      <div class="setting-row"><div class="txt"><b>Tone Guard</b><span>Flags harsh or ambiguous messages before you send</span></div><button class="switch on" onclick="toggleSwitch(this)"><div class="k"></div></button></div>
+      <div class="setting-row"><div class="txt"><b>Style-Matched Smart Replies</b><span>Suggestions written in your own texting style</span></div><button class="switch on" onclick="toggleSwitch(this)"><div class="k"></div></button></div>
+      <div class="setting-row"><div class="txt"><b>Scam Shield</b><span>Warns about scam and phishing patterns</span></div><button class="switch on" onclick="toggleSwitch(this)"><div class="k"></div></button></div>
+    </div>
+
+    <div class="settings-section">
+      <h4>AI features — conversation intelligence</h4>
+      <div class="setting-row"><div class="txt"><b>Live Cultural Translation</b><span>Adapts idioms &amp; tone across cultures, in chat and calls</span></div><button class="switch on" onclick="toggleSwitch(this)"><div class="k"></div></button></div>
+      <div class="setting-row"><div class="txt"><b>Call Companion</b><span>Live captions, transcription, and after-call summaries</span></div><button class="switch on" onclick="toggleSwitch(this)"><div class="k"></div></button></div>
+      <div class="setting-row"><div class="txt"><b>Catch-Me-Up</b><span>Topic-organized summaries for muted or busy chats</span></div><button class="switch on" onclick="toggleSwitch(this)"><div class="k"></div></button></div>
+      <div class="setting-row"><div class="txt"><b>Contextual Emoji Suggestions</b><span>AI picks 4 fitting emoji for the conversation at hand</span></div><button class="switch on" onclick="toggleSwitch(this)"><div class="k"></div></button></div>
+    </div>
+
+    <div class="settings-section">
+      <h4>AI features — personal &amp; reflective</h4>
+      <div class="setting-row"><div class="txt"><b>Greeting Assistant</b><span>Drafts festival/celebration greetings on request</span></div><button class="switch on" onclick="toggleSwitch(this)"><div class="k"></div></button></div>
+      <div class="setting-row"><div class="txt"><b>Digital Wellbeing Nudge</b><span>Gentle nudge based on real time spent in the app this session</span></div><button class="switch on" onclick="toggleSwitch(this)"><div class="k"></div></button></div>
+    </div>
+
+    <div class="settings-section">
+      <h4>Account</h4>
+      <div class="setting-row"><div class="txt"><b>Signed in as</b><span id="account-name-display">—</span></div></div>
+      <div class="setting-row"><div class="txt"><b>Log out</b><span>Keeps your account — log back in anytime with your number</span></div><button class="chip-btn ghost" onclick="logOutAccount()">Log out</button></div>
+      <div class="setting-row"><div class="txt"><b>Delete my account</b><span>Removes your profile from the People directory permanently</span></div><button class="chip-btn" style="background:var(--coral); color:#fff;" onclick="confirmDeleteAccount()">Delete account</button></div>
+    </div>
+
+    <div class="settings-section">
+      <h4>Accessibility</h4>
+      <div class="setting-row"><div class="txt"><b>High-contrast mode</b><span>Increases contrast across all screens</span></div><button class="switch" onclick="toggleSwitch(this)"><div class="k"></div></button></div>
+      <div class="setting-row"><div class="txt"><b>Larger text</b><span>Increases base text size app-wide</span></div><button class="switch" onclick="toggleSwitch(this); document.body.style.fontSize=this.classList.contains('on')?'17px':'15px'"><div class="k"></div></button></div>
+    </div>
+
+    <div class="about-wrap" style="padding:20px 0 0;">
+      <div class="credit">Saarthi — Created by Saandeep Kishore</div>
+    </div>
+  </div>
+
+  <!-- ABOUT VIEW -->
+  <div class="about-wrap" id="view-about" style="display:none; width:100%;">
+    <svg class="about-mark" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="none" stroke="#F2A93B" stroke-width="2.5"/><circle cx="32" cy="32" r="7" fill="#F2A93B"/></svg>
+    <h2>Saarthi</h2>
+    <p style="font-style:italic; color:var(--teal); margin-top:-8px;">"Your conversations, understood."</p>
+    <p style="font-size:14.5px; color:var(--text-dim); line-height:1.7; max-width:520px;">
+      Saarthi means "guide" or "charioteer" — someone who helps you navigate, never who steers for you.
+      That's the idea behind every AI feature here: quiet, opt-in help that makes conversations clearer,
+      safer, and a little warmer, without ever taking the wheel.
+    </p>
+    <p style="font-size:13px; color:var(--text-dim);">Saarthi syncs real accounts and messages between everyone using this app through a shared Firebase database, and calls, transcripts, and text AI features run through a shared server-side proxy so no one needs their own API key. There's no OTP/identity verification, so treat contact identities the way you would in any app without phone verification. AI features that read personal content are opt-in and can be switched off individually in Settings.</p>
+    <div class="credit">Saarthi — Created by Saandeep Kishore</div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal" id="modal-body"></div>
+</div>
+
+<!-- Firebase powers real accounts, real-time messages, and call signaling
+     between everyone using this app. It needs its own free project config
+     (see FIREBASE_CONFIG near the top of the script below). -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ================================================================
+   CONFIG #1 — Firebase (real accounts, real-time messages, call signaling)
+   ================================================================
+   1. Go to https://console.firebase.google.com -> Add project (free,
+      no credit card needed for this — the Spark plan covers everything
+      this app uses).
+   2. Inside the project: Build -> Firestore Database -> Create database
+      -> Start in test mode (or use the firestore.rules file provided
+      alongside this app for slightly tighter rules).
+   3. Project settings (gear icon) -> General -> "Your apps" -> Web app
+      (</> icon) -> register it -> copy the firebaseConfig object it
+      shows you -> paste it below, replacing the placeholder.
+   ================================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBGZF3MZHLJGMoFoZk22L1bckvDqp1_Ht8",
+  authDomain: "saarthi-60222.firebaseapp.com",
+  projectId: "saarthi-60222",
+  storageBucket: "saarthi-60222.firebasestorage.app",
+  messagingSenderId: "225698404003",
+  appId: "1:225698404003:web:8a26d24cf8d98af068d116",
+};
+/* ================================================================
+   CONFIG #2 — AI proxy (shared Groq key via the Cloudflare Worker)
+   ================================================================
+   Deploy saarthi_proxy_worker.js (see comments at the top of that
+   file), then paste its URL below. This is what lets every person
+   using this app get real AI features without adding their own key.
+   ================================================================ */
+const CONFIG = {
+  PROXY_URL: "https://saarthi-proxy.saandeepkishore.workers.dev", // e.g. "https://saarthi-proxy.yourname.workers.dev"
+};
+function groqConfigured(){ return !!CONFIG.PROXY_URL; }
+
+let firebaseReady = false;
+let db = null;
+function firebaseConfigured(){
+  return FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith("PASTE_");
+}
+function initFirebase(){
+  if (!firebaseConfigured()) return false;
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    firebaseReady = true;
+    return true;
+  } catch(e) {
+    console.error("Firebase init failed:", e);
+    return false;
+  }
+}
+
+/* Calls the shared proxy for a text-generation task. Retries once on a
+   transient error, and only falls back to a canned response if the
+   proxy isn't configured yet or is genuinely unreachable. */
+let lastAIError = null;
+async function askSaarthi(prompt, fallback, system) {
+  if (!groqConfigured()) return fallback;
+  const call = async () => {
+    const res = await fetch(CONFIG.PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, system }),
+    });
+    if (!res.ok) throw new Error(`Proxy ${res.status}`);
+    const data = await res.json();
+    return (data.text || "").trim();
+  };
+  try {
+    const text = await call();
+    return text || fallback;
+  } catch (e1) {
+    try {
+      const text = await call();
+      return text || fallback;
+    } catch (e2) {
+      console.error("Saarthi AI call failed after retry:", e2);
+      lastAIError = String(e2);
+      return fallback;
+    }
+  }
+}
+/* Sends a short audio clip to the proxy for real transcription (Whisper). */
+async function transcribeAudio(blob) {
+  if (!groqConfigured()) return null;
+  try {
+    const form = new FormData();
+    form.append("audio", blob, "chunk.webm");
+    const res = await fetch(CONFIG.PROXY_URL, { method: "POST", body: form });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return (data.text || "").trim() || null;
+  } catch (e) {
+    console.warn("Transcription failed:", e);
+    return null;
+  }
+}
+function aiStatusLabel(){
+  if (!groqConfigured()) return "Not connected · add your worker URL in CONFIG";
+  return lastAIError ? "Live · powered by Groq (last call failed, showing fallback)" : "Live · powered by Groq";
+}
+function updateAIStatusUI(){
+  const s = document.getElementById('ai-engine-status');
+  const m = document.getElementById('ai-engine-model');
+  if(s) s.textContent = aiStatusLabel();
+  if(m) m.textContent = groqConfigured() ? "via shared proxy" : "—";
+}
+
+/* ================================================================
+   STATE
+   ================================================================ */
+let currentUser = null;      // { name, phone }
+let currentChat = null;      // chat id currently open
+let myChats = {};            // chatId -> chat doc data (live, from Firestore)
+let myChatsUnsub = null;
+let messagesUnsub = null;
+let peopleUnsub = null;
+let incomingCallUnsub = null;
+const stateFlags = { onboardStep:0 };
+
+function phoneId(p){ return String(p).replace(/\D/g,''); }
+function chatIdFor(phoneA, phoneB){
+  const a = phoneId(phoneA), b = phoneId(phoneB);
+  return a < b ? `${a}_${b}` : `${b}_${a}`;
+}
+
+/* ---------------- onboarding ---------------- */
+function nextOnboard(){
+  const slides = document.querySelectorAll('.ob-slide');
+  const dots = document.querySelectorAll('.ob-dot');
+  stateFlags.onboardStep++;
+  if(stateFlags.onboardStep >= slides.length){ finishOnboard(); return; }
+  slides.forEach(s=>s.classList.remove('active'));
+  dots.forEach(d=>d.classList.remove('active'));
+  slides[stateFlags.onboardStep].classList.add('active');
+  dots[stateFlags.onboardStep].classList.add('active');
+  if(stateFlags.onboardStep === slides.length-1) document.getElementById('ob-next-btn').textContent = "Let's go";
+}
+function skipOnboard(){ finishOnboard(); }
+function finishOnboard(){
+  document.getElementById('onboard').classList.add('hidden');
+  const saved = localStorage.getItem('saarthi_profile');
+  if (saved) {
+    try {
+      currentUser = JSON.parse(saved);
+      startApp();
+      return;
+    } catch(e) {}
+  }
+  const gate = document.getElementById('account-gate');
+  gate.classList.remove('hidden');
+  requestAnimationFrame(()=> gate.classList.add('show-gate'));
+  setTimeout(()=>document.getElementById('signup-name').focus(), 400);
+}
+let gateMode = 'signup';
+function toggleGateMode(){
+  gateMode = gateMode==='signup' ? 'login' : 'signup';
+  const nameField = document.getElementById('gate-name-field');
+  const title = document.getElementById('gate-title');
+  const tag = document.getElementById('gate-tag');
+  const submitBtn = document.getElementById('gate-submit-btn');
+  const toggleLink = document.getElementById('gate-toggle-link');
+  document.getElementById('signup-error').textContent = '';
+  if(gateMode==='login'){
+    nameField.style.display = 'none';
+    title.textContent = 'Log in to Saarthi';
+    tag.textContent = 'Enter the phone number you signed up with.';
+    submitBtn.textContent = 'Log in';
+    toggleLink.textContent = "New here? Create an account instead";
+  } else {
+    nameField.style.display = 'block';
+    title.textContent = 'Create your account';
+    tag.textContent = 'Just your name and number — nothing else.';
+    submitBtn.textContent = 'Create account & start chatting';
+    toggleLink.textContent = 'Already have an account? Log in';
+  }
+}
+function gateSubmit(){ gateMode==='login' ? loginExisting() : completeSignup(); }
+async function loginExisting(){
+  const countrySel = document.getElementById('signup-country').value;
+  const countryCode = countrySel==='other' ? document.getElementById('signup-country-other').value.trim() : countrySel;
+  const localNumber = phoneId(document.getElementById('signup-phone').value.trim());
+  const err = document.getElementById('signup-error');
+  if(!countryCode || localNumber.length < 5){ err.textContent = "Enter your country code and mobile number."; return; }
+  const phone = phoneId(countryCode) + localNumber;
+  if(!firebaseConfigured()){
+    err.textContent = "This app's owner hasn't connected Firebase yet — can't log in until that's done.";
+    return;
+  }
+  err.textContent = "Looking for your account…";
+  try {
+    const snap = await db.collection('users').doc(phone).get();
+    if(!snap.exists){
+      err.textContent = "No account found with that number. Use \"Create an account\" instead.";
+      return;
+    }
+    currentUser = { name: snap.data().name, phone };
+    localStorage.setItem('saarthi_profile', JSON.stringify(currentUser));
+    err.textContent = "";
+    const gate = document.getElementById('account-gate');
+    gate.classList.remove('show-gate');
+    setTimeout(()=>gate.classList.add('hidden'), 500);
+    startApp();
+  } catch(e) {
+    console.error(e);
+    err.textContent = "Couldn't reach the database. Check your connection and try again.";
+  }
+}
+async function completeSignup(){
+  const name = document.getElementById('signup-name').value.trim();
+  const countrySel = document.getElementById('signup-country').value;
+  const countryCode = countrySel==='other' ? document.getElementById('signup-country-other').value.trim() : countrySel;
+  const localNumber = phoneId(document.getElementById('signup-phone').value.trim());
+  const err = document.getElementById('signup-error');
+  if(!name || !countryCode || localNumber.length < 5){ err.textContent = "Enter your name, country code, and a valid mobile number."; return; }
+  const phone = phoneId(countryCode) + localNumber;
+  if(!firebaseConfigured()){
+    err.textContent = "This app's owner hasn't connected Firebase yet (see FIREBASE_CONFIG at the top of the script) — accounts can't be created until that's done.";
+    return;
+  }
+  err.textContent = "";
+  currentUser = { name, phone };
+  try {
+    await db.collection('users').doc(phone).set({
+      name, phone,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+  } catch(e) {
+    err.textContent = "Couldn't reach the database. Check your FIREBASE_CONFIG and Firestore rules.";
+    console.error(e);
+    return;
+  }
+  localStorage.setItem('saarthi_profile', JSON.stringify(currentUser));
+  const gate = document.getElementById('account-gate');
+  gate.classList.remove('show-gate');
+  setTimeout(()=>gate.classList.add('hidden'), 500);
+  startApp();
+  showWelcomeToast(name);
+}
+function startApp(){
+  document.getElementById('app').classList.add('ready');
+  updateAIStatusUI();
+  startPresenceHeartbeat();
+  listenToMyChats();
+  listenForIncomingCalls();
+  listenToCallHistory();
+  switchView('chats', document.querySelector('.rail-btn[data-view="chats"]'));
+}
+let presenceHeartbeatId = null;
+function startPresenceHeartbeat(){
+  if(!firebaseReady) return;
+  const beat = () => db.collection('users').doc(currentUser.phone).set(
+    { lastSeen: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true }
+  ).catch(()=>{});
+  beat();
+  presenceHeartbeatId = setInterval(beat, 25000);
+}
+function showWelcomeToast(name){
+  const toast = document.createElement('div');
+  toast.className='toast';
+  toast.innerHTML = `<b>👋 Welcome, ${name.split(' ')[0]}</b><p>Add people from the People tab by their phone number to start real conversations. Every AI feature is on and can be turned off in Settings.</p>`;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(), 8000);
+}
+
+/* ---------------- log out / delete account ---------------- */
+function resetToGate(){
+  clearInterval(presenceHeartbeatId);
+  if(myChatsUnsub) myChatsUnsub();
+  if(messagesUnsub) messagesUnsub();
+  if(incomingCallUnsub) incomingCallUnsub();
+  callHistoryUnsubs.forEach(u=>u()); callHistoryUnsubs=[];
+  stopPresenceTracking();
+  currentUser = null; currentChat = null; myChats = {};
+  document.getElementById('app').classList.remove('ready');
+  const gate = document.getElementById('account-gate');
+  document.getElementById('signup-name').value = '';
+  document.getElementById('signup-phone').value = '';
+  document.getElementById('signup-error').textContent = '';
+  if(gateMode==='login') toggleGateMode(); // reset to signup view by default
+  gate.classList.remove('hidden');
+  requestAnimationFrame(()=> gate.classList.add('show-gate'));
+}
+function logOutAccount(){
+  localStorage.removeItem('saarthi_profile');
+  resetToGate();
+}
+function confirmDeleteAccount(){
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>Delete your account?</h3>
+    <div class="sub" style="margin:8px 0 14px;">This removes your profile (name + number) from the People directory so no one can find or add you anymore. Messages you've already sent in existing chats stay visible to the other participants — deleting your account doesn't erase conversation history for them.</div>
+    <button class="btn btn-primary" style="width:100%; background:var(--coral);" onclick="deleteAccount()">Yes, delete my account</button>
+  `);
+}
+async function deleteAccount(){
+  closeModal();
+  if(firebaseReady && currentUser){
+    try { await db.collection('users').doc(currentUser.phone).delete(); }
+    catch(e){ console.error('account delete failed', e); alert("Couldn't delete your profile from the database — check your connection and try again."); return; }
+  }
+  localStorage.removeItem('saarthi_profile');
+  resetToGate();
+}
+
+/* ---------------- theme ---------------- */
+function toggleTheme(e){
+  const body = document.body;
+  const next = body.getAttribute('data-theme')==='dark' ? 'light':'dark';
+  const reveal = document.getElementById('theme-reveal');
+  reveal.style.left = e.clientX+'px'; reveal.style.top = e.clientY+'px';
+  reveal.style.background = next==='dark' ? '#0E1524' : '#F6F1E8';
+  reveal.classList.remove('active'); void reveal.offsetWidth; reveal.classList.add('active');
+  setTimeout(()=>{ body.setAttribute('data-theme', next); document.querySelector('.theme-toggle .knob').textContent = next==='dark' ? '★' : '☀'; }, 90);
+}
+
+/* ---------------- view switching ---------------- */
+function switchView(view, btn){
+  document.querySelectorAll('.rail-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('app').classList.remove('mobile-chat-open'); // rail nav always goes back to a list view on mobile
+  ['chats','calls','people','settings','about'].forEach(v=>{
+    const el = document.getElementById('view-'+v);
+    if(el) el.style.display = 'none';
+  });
+  document.getElementById('main-chats').style.display = 'none';
+  if(view==='chats'){
+    document.getElementById('view-chats').style.display='flex';
+    document.getElementById('main-chats').style.display='flex';
+  } else {
+    document.getElementById('view-'+view).style.display = (view==='settings'||view==='about'||view==='people')?'block':'flex';
+  }
+  if(view==='settings'){ updateAIStatusUI(); const el=document.getElementById('account-name-display'); if(el && currentUser) el.textContent = `${currentUser.name} · +${currentUser.phone}`; }
+  if(view==='people') renderPeopleList('');
+}
+
+/* ================================================================
+   PEOPLE DIRECTORY (real users from Firestore)
+   ================================================================ */
+function renderPeopleList(filter){
+  const list = document.getElementById('people-list');
+  if(!list) return;
+  if(!firebaseReady){
+    list.innerHTML = `<div class="sub">Firebase isn't connected yet, so there's no shared directory to show. See FIREBASE_CONFIG at the top of the script.</div>`;
+    return;
+  }
+  list.innerHTML = `<div class="sub">Loading…</div>`;
+  db.collection('users').limit(200).get().then(snap=>{
+    const items = [];
+    snap.forEach(doc=>{
+      const u = doc.data();
+      if(u.phone === currentUser.phone) return;
+      if(filter && !(`${u.name} ${u.phone}`.toLowerCase().includes(filter.toLowerCase()))) return;
+      items.push(u);
+    });
+    if(!items.length){ list.innerHTML = `<div class="sub">No one found. Ask a friend to create an account too — they'll show up here.</div>`; return; }
+    list.innerHTML = items.map(u=>`
+      <div class="chat-item">
+        <div class="avatar" style="background:#2BB3A3;">${(u.name||'?').slice(0,1).toUpperCase()}</div>
+        <div class="chat-meta"><div class="top"><span class="name">${u.name}</span></div><div class="preview">+${u.phone}</div></div>
+        <button class="chip-btn" onclick="addContact('${u.phone}','${u.name.replace(/'/g,"\\'")}')">+ Chat</button>
+      </div>`).join('');
+  }).catch(e=>{
+    console.error(e);
+    list.innerHTML = `<div class="sub">Couldn't load the directory — check your Firestore rules allow reading the "users" collection.</div>`;
+  });
+}
+async function addContact(phone, name){
+  const chatId = chatIdFor(currentUser.phone, phone);
+  const ref = db.collection('chats').doc(chatId);
+  const snap = await ref.get();
+  const chatData = {
+    isGroup: false,
+    participants: [phoneId(currentUser.phone), phoneId(phone)],
+    participantNames: { [phoneId(currentUser.phone)]: currentUser.name, [phoneId(phone)]: name },
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    lastMessage: '', lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+  };
+  if(!snap.exists){
+    await ref.set(chatData);
+  }
+  // Populate the local cache immediately (don't wait for the real-time
+  // listener to catch up) so the chat opens right away.
+  myChats[chatId] = snap.exists ? snap.data() : chatData;
+  currentChat = chatId;
+  switchView('chats', document.querySelector('.rail-btn[data-view="chats"]'));
+  renderChatWindow();
+}
+function openNewGroupModal(){
+  if(!firebaseReady){ alert("Connect Firebase first (see FIREBASE_CONFIG)."); return; }
+  db.collection('users').limit(200).get().then(snap=>{
+    const others = [];
+    snap.forEach(doc=>{ const u=doc.data(); if(u.phone!==currentUser.phone) others.push(u); });
+    const checks = others.map(u=>`
+      <label style="display:flex; align-items:center; gap:8px; padding:6px 0;">
+        <input type="checkbox" value="${u.phone}" data-name="${u.name.replace(/"/g,'&quot;')}" class="group-member-check">
+        ${u.name} <span class="mono" style="color:var(--text-dim); font-size:11px;">+${u.phone}</span>
+      </label>`).join('') || '<div class="sub">No one else has an account yet.</div>';
+    openModal(`
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <h3>New group</h3>
+      <input id="group-name-input" placeholder="Group name" style="width:100%; margin:10px 0; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg3); color:var(--text);">
+      <div style="max-height:220px; overflow:auto;">${checks}</div>
+      <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="createGroup()">Create group</button>
+    `);
+  });
+}
+async function createGroup(){
+  const name = document.getElementById('group-name-input').value.trim();
+  const checked = [...document.querySelectorAll('.group-member-check:checked')];
+  if(!name || !checked.length){ alert("Give the group a name and pick at least one person."); return; }
+  const participants = [phoneId(currentUser.phone), ...checked.map(c=>phoneId(c.value))];
+  const participantNames = { [phoneId(currentUser.phone)]: currentUser.name };
+  checked.forEach(c=> participantNames[phoneId(c.value)] = c.dataset.name);
+  const chatData = {
+    isGroup: true, groupName: name, participants, participantNames,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    lastMessage: '', lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+  };
+  const ref = await db.collection('chats').add(chatData);
+  myChats[ref.id] = chatData; // populate immediately, don't wait on the listener
+  currentChat = ref.id;
+  closeModal();
+  switchView('chats', document.querySelector('.rail-btn[data-view="chats"]'));
+  renderChatWindow();
+}
+
+/* ================================================================
+   CHAT LIST (real-time, from Firestore)
+   ================================================================ */
+function listenToMyChats(){
+  if(!firebaseReady){ renderChatList(); return; }
+  if(myChatsUnsub) myChatsUnsub();
+  myChatsUnsub = db.collection('chats')
+    .where('participants', 'array-contains', phoneId(currentUser.phone))
+    .onSnapshot(snap=>{
+      myChats = {};
+      snap.forEach(doc=> myChats[doc.id] = doc.data());
+      renderChatList(document.querySelector('.search input')?.value||'');
+      if(currentChat && myChats[currentChat] && document.getElementById('main-chats').style.display!=='none'){
+        renderChatHeader();
+      }
+    }, err=>console.error('chats listener error', err));
+}
+function chatDisplayName(c){
+  if(c.isGroup) return c.groupName || 'Group';
+  const otherId = (c.participants||[]).find(p=>p!==phoneId(currentUser.phone));
+  return (c.participantNames && c.participantNames[otherId]) || ('+'+otherId);
+}
+function chatInitials(name){ return (name||'?').split(' ').map(s=>s[0]).join('').slice(0,2).toUpperCase(); }
+function renderChatList(filter=''){
+  const list = document.getElementById('chat-list');
+  if(!list) return;
+  const entries = Object.entries(myChats)
+    .filter(([id,c]) => !(c.hiddenFor||[]).includes(phoneId(currentUser.phone)))
+    .sort((a,b)=>{
+    const at = a[1].lastMessageAt?.toMillis?.() || 0, bt = b[1].lastMessageAt?.toMillis?.() || 0;
+    return bt - at;
+  });
+  if(!entries.length){
+    list.innerHTML = `<div class="sub" style="padding:20px;">No chats yet. Go to the People tab to add someone by phone number.</div>`;
+    return;
+  }
+  list.innerHTML = '';
+  entries.forEach(([id, c])=>{
+    const name = chatDisplayName(c);
+    if(filter && !name.toLowerCase().includes(filter.toLowerCase())) return;
+    const div = document.createElement('div');
+    div.className = 'chat-item' + (id===currentChat ? ' active':'');
+    div.onclick = ()=>{ if(div.dataset.suppressClick){ delete div.dataset.suppressClick; return; } currentChat=id; renderChatList(document.querySelector('.search input').value); renderChatWindow(); };
+    div.oncontextmenu = (e)=>{ e.preventDefault(); openChatListContextMenu(id, name, e.clientX, e.clientY); };
+    const time = c.lastMessageAt?.toDate ? c.lastMessageAt.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+    div.innerHTML = `
+      <div class="avatar" style="background:${c.isGroup?'#F2A93B':'#2BB3A3'}">${chatInitials(name)}</div>
+      <div class="chat-meta">
+        <div class="top"><span class="name">${name}</span><span class="time">${time}</span></div>
+        <div class="preview">${(c.lastMessage||'No messages yet').slice(0,60)}</div>
+      </div>`;
+    attachLongPress(div, id, name);
+    list.appendChild(div);
+  });
+}
+
+/* ---------------- long-press on a chat in the list: delete without opening it ---------------- */
+function attachLongPress(el, chatId, chatName){
+  let timer = null, longPressed = false, startX = 0, startY = 0;
+  const LONG_PRESS_MS = 500, MOVE_TOLERANCE = 10;
+  const start = (x, y)=>{
+    longPressed = false; startX = x; startY = y;
+    el.classList.add('pressed');
+    timer = setTimeout(()=>{
+      longPressed = true;
+      el.classList.remove('pressed');
+      el.dataset.suppressClick = '1'; // stop the upcoming click from opening the chat
+      if(navigator.vibrate) navigator.vibrate(15);
+      openChatListContextMenu(chatId, chatName, startX, startY);
+    }, LONG_PRESS_MS);
+  };
+  const cancel = ()=>{ clearTimeout(timer); el.classList.remove('pressed'); };
+  el.addEventListener('touchstart', (e)=>{ const t=e.touches[0]; start(t.clientX, t.clientY); }, {passive:true});
+  el.addEventListener('touchmove', (e)=>{ const t=e.touches[0]; if(Math.abs(t.clientX-startX)>MOVE_TOLERANCE || Math.abs(t.clientY-startY)>MOVE_TOLERANCE) cancel(); }, {passive:true});
+  el.addEventListener('touchend', cancel);
+  el.addEventListener('touchcancel', cancel);
+  el.addEventListener('mousedown', (e)=>{ if(e.button!==0) return; start(e.clientX, e.clientY); });
+  el.addEventListener('mousemove', (e)=>{ if(Math.abs(e.clientX-startX)>MOVE_TOLERANCE || Math.abs(e.clientY-startY)>MOVE_TOLERANCE) cancel(); });
+  el.addEventListener('mouseup', cancel);
+  el.addEventListener('mouseleave', cancel);
+}
+function closeChatListContextMenu(){
+  document.getElementById('list-ctx-menu')?.remove();
+  document.getElementById('list-ctx-backdrop')?.remove();
+}
+function openChatListContextMenu(chatId, chatName, x, y){
+  closeChatListContextMenu();
+  const backdrop = document.createElement('div');
+  backdrop.className = 'list-ctx-backdrop'; backdrop.id = 'list-ctx-backdrop';
+  backdrop.onclick = closeChatListContextMenu;
+  document.body.appendChild(backdrop);
+  const menu = document.createElement('div');
+  menu.className = 'list-ctx-menu'; menu.id = 'list-ctx-menu';
+  menu.innerHTML = `
+    <button class="danger" onclick="removeChatFromList('${chatId}', ${JSON.stringify(chatName).replace(/"/g,'&quot;')})">🗑️ Delete chat</button>
+    <button onclick="closeChatListContextMenu()">Cancel</button>`;
+  document.body.appendChild(menu);
+  // keep the menu on-screen
+  const menuW = 200, menuH = 90;
+  const left = Math.min(x, window.innerWidth - menuW - 10);
+  const top = Math.min(y, window.innerHeight - menuH - 10);
+  menu.style.left = Math.max(10,left) + 'px';
+  menu.style.top = Math.max(10,top) + 'px';
+}
+async function removeChatFromList(chatId, chatName){
+  closeChatListContextMenu();
+  if(!confirm(`Remove your chat with ${chatName} from this screen? It'll come back if a new message arrives.`)) return;
+  if(firebaseReady){
+    await db.collection('chats').doc(chatId).set({
+      hiddenFor: firebase.firestore.FieldValue.arrayUnion(phoneId(currentUser.phone))
+    }, { merge:true });
+  } else {
+    delete myChats[chatId];
+  }
+  if(currentChat === chatId){ currentChat = null; renderChatWindow(); }
+  renderChatList(document.querySelector('.search input')?.value || '');
+}
+function filterChats(v){ renderChatList(v); }
+function dismiss(id){ const el = document.getElementById(id); if(el) el.style.display='none'; }
+
+/* ================================================================
+   CHAT WINDOW (real-time messages)
+   ================================================================ */
+/* ---------------- presence: "online" / "last seen" + "typing…" ---------------- */
+const ONLINE_THRESHOLD_MS = 30000; // heartbeat writes every 25s, so 30s = generous "still online" window
+const TYPING_THRESHOLD_MS = 5000;  // typing flag is refreshed every keystroke-pause; treat as stale after 5s
+let chatPresenceUnsub = null, otherUserLastSeen = null, presenceTickId = null;
+function onlineStatusEnabled(){ const el = document.getElementById('online-status-toggle'); return !el || el.classList.contains('on'); }
+function typingIndicatorEnabled(){ const el = document.getElementById('typing-indicator-toggle'); return !el || el.classList.contains('on'); }
+function subscribeOtherUserPresence(otherId){
+  if(chatPresenceUnsub){ chatPresenceUnsub(); chatPresenceUnsub = null; }
+  otherUserLastSeen = null;
+  if(!firebaseReady || !otherId) return;
+  chatPresenceUnsub = db.collection('users').doc(otherId).onSnapshot(snap=>{
+    otherUserLastSeen = snap.data()?.lastSeen?.toMillis?.() || null;
+    renderChatHeader();
+  }, err=>console.warn('presence listener error', err));
+}
+function stopPresenceTracking(){
+  if(chatPresenceUnsub){ chatPresenceUnsub(); chatPresenceUnsub = null; }
+  if(presenceTickId){ clearInterval(presenceTickId); presenceTickId = null; }
+  otherUserLastSeen = null;
+}
+function formatLastSeen(ms){
+  const d = new Date(ms);
+  const sameDay = d.toDateString() === new Date().toDateString();
+  const time = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  return sameDay ? `last seen today at ${time}` : `last seen ${d.toLocaleDateString([], {month:'short', day:'numeric'})} at ${time}`;
+}
+function computeStatusText(c){
+  if(c.isGroup) return `${(c.participants||[]).length} members`;
+  const myId = phoneId(currentUser.phone);
+  const otherId = (c.participants||[]).find(p=>p!==myId);
+  if(typingIndicatorEnabled()){
+    const typingAt = (c.typingUserId === otherId && c.typingAt?.toMillis) ? c.typingAt.toMillis() : null;
+    if(typingAt && (Date.now() - typingAt) < TYPING_THRESHOLD_MS) return 'typing…';
+  }
+  if(onlineStatusEnabled()){
+    if(otherUserLastSeen && (Date.now() - otherUserLastSeen) < ONLINE_THRESHOLD_MS) return 'online';
+    if(otherUserLastSeen) return formatLastSeen(otherUserLastSeen);
+  }
+  return 'contact';
+}
+function renderChatHeader(){
+  const c = myChats[currentChat];
+  if(!c) return;
+  const name = chatDisplayName(c);
+  const headerEl = document.querySelector('#main-chats .chat-header .name');
+  const statusEl = document.querySelector('#main-chats .chat-header .status');
+  if(headerEl) headerEl.textContent = name;
+  if(statusEl) statusEl.textContent = computeStatusText(c);
+}
+/* ---------------- typing: write a live flag to the chat doc while composing ----------------
+   IMPORTANT: set(..., {merge:true}) does NOT treat a dot-containing key like
+   "typing.<id>" as a nested path — that dot-notation trick only works with
+   update(). With set()/merge it's stored as one literal flat field named
+   "typing.<id>", so reading it back as c.typing[id] always returns undefined.
+   Using plain flat fields (typingUserId / typingAt) sidesteps that entirely. */
+let typingClearTimer = null, lastTypingWriteAt = 0;
+function markTyping(){
+  if(!firebaseReady || !currentChat || !typingIndicatorEnabled()) return;
+  const myId = phoneId(currentUser.phone);
+  const now = Date.now();
+  clearTimeout(typingClearTimer);
+  typingClearTimer = setTimeout(clearTyping, TYPING_THRESHOLD_MS);
+  if(now - lastTypingWriteAt < 2000) return; // throttle writes to ~1 per 2s while actively typing
+  lastTypingWriteAt = now;
+  db.collection('chats').doc(currentChat).set({
+    typingUserId: myId, typingAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge:true }).catch(()=>{});
+}
+function clearTyping(){
+  clearTimeout(typingClearTimer);
+  if(!firebaseReady || !currentChat) return;
+  const myId = phoneId(currentUser.phone);
+  // Only clear if we're the one currently flagged as typing — avoids racily
+  // clearing the other person's just-set flag if both timers fire close together.
+  const c = myChats[currentChat];
+  if(c && c.typingUserId && c.typingUserId !== myId) return;
+  db.collection('chats').doc(currentChat).set({
+    typingUserId: firebase.firestore.FieldValue.delete(), typingAt: firebase.firestore.FieldValue.delete()
+  }, { merge:true }).catch(()=>{});
+}
+function renderChatWindow(){
+  const c = myChats[currentChat];
+  const pane = document.getElementById('main-chats');
+  if(!c){
+    // Not in the local cache yet — most likely we just created this chat
+    // and the real-time listener hasn't caught up. Fetch it directly
+    // instead of giving up, so opening a brand-new chat always works.
+    const chatId = currentChat;
+    if(firebaseReady && chatId){
+      pane.innerHTML = `<div class="sub" style="padding:30px;">Loading chat…</div>`;
+      db.collection('chats').doc(chatId).get().then(snap=>{
+        if(snap.exists){
+          myChats[chatId] = snap.data();
+          if(currentChat===chatId) renderChatWindow();
+        } else if(currentChat===chatId){
+          pane.innerHTML = `<div class="sub" style="padding:30px;">Select a chat, or add someone from People.</div>`;
+        }
+      }).catch(e=>{
+        console.error('chat fetch failed', e);
+        if(currentChat===chatId) pane.innerHTML = `<div class="sub" style="padding:30px;">Couldn't load this chat — check your connection and try again.</div>`;
+      });
+    } else {
+      pane.innerHTML = `<div class="sub" style="padding:30px;">Select a chat, or add someone from People.</div>`;
+    }
+    return;
+  }
+  const name = chatDisplayName(c);
+  document.getElementById('app').classList.add('mobile-chat-open');
+  pane.innerHTML = `
+    <div class="chat-header">
+      <button class="mobile-back-btn hbtn" onclick="closeMobileChat()" title="Back to chats">←</button>
+      <div class="avatar" style="background:${c.isGroup?'#F2A93B':'#2BB3A3'}">${chatInitials(name)}</div>
+      <div class="info"><div class="name">${name}</div><div class="status">${computeStatusText(c)}</div></div>
+      ${c.isGroup ? '<button class="hbtn" onclick="openCatchUp()" title="Catch Me Up">⏱️</button>' : '<button class="hbtn" onclick="toggleTranslate()" title="Live Cultural Translation" id="translate-btn">🌐</button>'}
+      <button class="hbtn" title="Voice call" onclick="startCall('${currentChat}', false)">📞</button>
+      <button class="hbtn" title="Video call" onclick="startCall('${currentChat}', true)">🎥</button>
+      <div class="chat-menu-wrap">
+        <button class="hbtn" title="Chat options" onclick="toggleChatMenu()">⋮</button>
+        <div class="chat-menu" id="chat-menu">
+          <button onclick="deleteChatForMe()">Delete chat for me</button>
+          <button class="danger" onclick="deleteChatForEveryone()">Delete chat for everyone</button>
+        </div>
+      </div>
+    </div>
+    <div class="messages" id="messages-box"></div>
+    ${c.isGroup ? '' : `<div class="replies-row" id="replies-row"></div>`}
+    <div class="tone-guard" id="tone-guard"></div>
+    <div class="composer" style="position:relative;">
+      <div class="emoji-picker" id="emoji-picker"></div>
+      <div class="composer-row">
+        <button class="icon-btn" title="Emoji" onclick="toggleEmojiPicker()">😀</button>
+        <button class="icon-btn" title="AI emoji suggestions for this conversation" onclick="toggleStickerPanel()">🎨</button>
+        <textarea id="compose-input" rows="1" placeholder="Message ${name}" oninput="onComposeInput(this)" onkeydown="onComposeKey(event)"></textarea>
+        <button class="icon-btn send-btn" title="Send" onclick="sendMessage()">➤</button>
+      </div>
+      <div class="sticker-panel" id="sticker-panel"></div>
+    </div>`;
+  subscribeToMessages(currentChat);
+  if(!c.isGroup) renderSmartReplies();
+  stopPresenceTracking();
+  if(!c.isGroup){
+    const myId = phoneId(currentUser.phone);
+    const otherId = (c.participants||[]).find(p=>p!==myId);
+    subscribeOtherUserPresence(otherId);
+    presenceTickId = setInterval(renderChatHeader, 15000); // refresh "online" -> "last seen X ago" as time passes
+  }
+}
+function toggleChatMenu(){ document.getElementById('chat-menu').classList.toggle('show'); }
+function closeMobileChat(){ document.getElementById('app').classList.remove('mobile-chat-open'); }
+document.addEventListener('click', (e)=>{
+  const menu = document.getElementById('chat-menu');
+  if(menu && menu.classList.contains('show') && !e.target.closest('.chat-menu-wrap')) menu.classList.remove('show');
+  const picker = document.getElementById('emoji-picker');
+  if(picker && picker.classList.contains('show') && !e.target.closest('.emoji-picker') && e.target.title!=='Emoji') picker.classList.remove('show');
+});
+
+/* ---------------- delete chat (for me / for everyone) ---------------- */
+async function deleteChatForMe(){
+  toggleChatMenu();
+  if(!confirm("Remove this chat from your list? It'll come back if a new message arrives.")) return;
+  await db.collection('chats').doc(currentChat).set({
+    hiddenFor: firebase.firestore.FieldValue.arrayUnion(phoneId(currentUser.phone))
+  }, { merge:true });
+  currentChat = null;
+  renderChatWindow();
+}
+async function deleteChatForEveryone(){
+  toggleChatMenu();
+  if(!confirm("Delete this entire conversation for everyone? This can't be undone.")) return;
+  const chatId = currentChat;
+  const msgsSnap = await db.collection('chats').doc(chatId).collection('messages').get();
+  const batchDeletes = msgsSnap.docs.map(d=>d.ref.delete());
+  await Promise.all(batchDeletes);
+  await db.collection('chats').doc(chatId).delete();
+  currentChat = null;
+  renderChatWindow();
+}
+
+/* ---------------- emoji picker (real, static — no AI needed for this) ---------------- */
+const EMOJI_SET = ["😀","😁","😂","🤣","😊","😍","😘","😜","🤔","😎","🙄","😴","😭","😡","🥳","👍","👎","👏","🙏","💪","❤️","🧡","💛","💚","💙","💜","🖤","🔥","✨","🎉","💯","😇","😢","😱","🤗","😅","🤝","👋","🤞","🙌","😋","🤩","🥰","😐","😶","🤐","🤫","🤯","🥶","🥵","🤒","🤕","🤮","🤢","😷","🤠","👻","💀","👀","💔","💕","🌸","🌈","☀️","🌙","⭐","☕","🍕","🍎","🎂","🎁","⚽","🏆","🚀","💡","📌","✅","❌"];
+function toggleEmojiPicker(){
+  const picker = document.getElementById('emoji-picker');
+  if(!picker.dataset.built){
+    picker.innerHTML = EMOJI_SET.map(e=>`<span onclick="insertEmoji('${e}')">${e}</span>`).join('');
+    picker.dataset.built = '1';
+  }
+  picker.classList.toggle('show');
+}
+function insertEmoji(e){
+  const input = document.getElementById('compose-input');
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? input.value.length;
+  input.value = input.value.slice(0,start) + e + input.value.slice(end);
+  input.focus();
+  input.selectionStart = input.selectionEnd = start + e.length;
+}
+/* ---------------- long-press (mobile) / right-click (desktop) on a single message
+   bubble — opens the "Delete message" action for exactly that message. The hover-only
+   🗑 icon (msg-del-btn) never appears on touchscreens since there's no hover state,
+   so this is the reliable way to delete one message on a phone. This is scoped to
+   this one row/msgId only — it never touches the rest of the chat. To delete the
+   entire chat instead, use the ⋮ menu in the chat header or long-press the chat in
+   the chat list. */
+function attachMessageLongPress(el, chatId, msgId, mine){
+  let timer = null, startX = 0, startY = 0;
+  const LONG_PRESS_MS = 450, MOVE_TOLERANCE = 10;
+  const start = (x, y)=>{
+    startX = x; startY = y;
+    el.classList.add('pressed');
+    timer = setTimeout(()=>{
+      el.classList.remove('pressed');
+      if(navigator.vibrate) navigator.vibrate(15);
+      openMessageActions(chatId, msgId, mine);
+    }, LONG_PRESS_MS);
+  };
+  const cancel = ()=>{ clearTimeout(timer); el.classList.remove('pressed'); };
+  el.addEventListener('touchstart', (e)=>{ const t=e.touches[0]; start(t.clientX, t.clientY); }, {passive:true});
+  el.addEventListener('touchmove', (e)=>{ const t=e.touches[0]; if(Math.abs(t.clientX-startX)>MOVE_TOLERANCE || Math.abs(t.clientY-startY)>MOVE_TOLERANCE) cancel(); }, {passive:true});
+  el.addEventListener('touchend', cancel);
+  el.addEventListener('touchcancel', cancel);
+  el.addEventListener('contextmenu', (e)=>{ e.preventDefault(); openMessageActions(chatId, msgId, mine); });
+}
+function subscribeToMessages(chatId){
+  if(messagesUnsub) messagesUnsub();
+  messagesUnsub = db.collection('chats').doc(chatId).collection('messages')
+    .orderBy('sentAt', 'asc').limitToLast(200)
+    .onSnapshot(snap=>{
+      const box = document.getElementById('messages-box');
+      if(!box) return;
+      box.innerHTML = '';
+      const c = myChats[chatId];
+      const myId = phoneId(currentUser.phone);
+      let lastIncoming = null;
+      snap.forEach(doc=>{
+        const m = doc.data();
+        if((m.deletedFor||[]).includes(myId)) return; // hidden just for me
+        const mine = m.from === myId;
+        if(!mine) lastIncoming = m;
+        const row = document.createElement('div');
+        row.className = 'msg-row ' + (mine ? 'out':'in');
+        const t = m.sentAt?.toDate ? m.sentAt.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'sending…';
+        const senderLabel = (c && c.isGroup && !mine) ? `<b style="font-size:11.5px; display:block; color:var(--teal); margin-bottom:2px;">${(c.participantNames||{})[m.from]||m.from}</b>` : '';
+        const body = m.deletedForEveryone ? `<i>This message was deleted</i>` : escapeHtml(m.text);
+        const delBtn = m.deletedForEveryone ? '' : `<button class="msg-del-btn" title="Delete" onclick="openMessageActions('${chatId}','${doc.id}', ${mine})">🗑</button>`;
+        row.innerHTML = `<div class="bubble ${m.flagged?'flagged':''} ${m.deletedForEveryone?'deleted':''}">${senderLabel}${body}<div class="t">${t}${delBtn}</div></div>`;
+        if(!m.deletedForEveryone) attachMessageLongPress(row, chatId, doc.id, mine);
+        box.appendChild(row);
+        if(m.flagged){
+          const banner = document.createElement('div');
+          banner.className = 'scam-banner';
+          banner.innerHTML = `<b>⚠️ Scam Shield: this looks like a phishing attempt.</b>
+            <div class="row">
+              <button class="chip-btn ghost" onclick="explainScam(this, '${attrStr(m.text)}')">Why flagged?</button>
+            </div>
+            <div class="explain">Tap "Why flagged?" for an explanation.</div>`;
+          box.appendChild(banner);
+        }
+      });
+      box.scrollTop = box.scrollHeight;
+      if(lastIncoming) maybeFlagScam(chatId, lastIncoming);
+    }, err=>console.error('messages listener error', err));
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/* Safe to drop inside onclick="...('${attrStr(x)}')" — escapes backslashes,
+   single quotes, and newlines so arbitrary user text can't break the
+   attribute or inject extra JS. Used instead of JSON.stringify, which
+   produces double quotes that would prematurely close a double-quoted
+   HTML attribute. */
+function attrStr(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n'); }
+
+/* ---------------- delete individual message ---------------- */
+function openMessageActions(chatId, msgId, mine){
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>Delete message</h3>
+    <div class="sub" style="margin-bottom:12px;">This only affects this one message.</div>
+    <button class="btn btn-ghost" style="width:100%; margin-bottom:8px;" onclick="deleteMessageForMe('${chatId}','${msgId}')">Delete for me</button>
+    ${mine ? `<button class="btn btn-primary" style="width:100%; background:var(--coral);" onclick="deleteMessageForEveryone('${chatId}','${msgId}')">Delete for everyone</button>` : ''}
+  `);
+}
+async function deleteMessageForMe(chatId, msgId){
+  closeModal();
+  await db.collection('chats').doc(chatId).collection('messages').doc(msgId).set({
+    deletedFor: firebase.firestore.FieldValue.arrayUnion(phoneId(currentUser.phone))
+  }, { merge:true });
+}
+async function deleteMessageForEveryone(chatId, msgId){
+  closeModal();
+  await db.collection('chats').doc(chatId).collection('messages').doc(msgId).set({
+    deletedForEveryone: true, text: ''
+  }, { merge:true });
+}
+
+/* Lightweight local heuristic first (instant, no network), matching the
+   pattern real scam-detection features use: fast local screen, AI only
+   explains on demand. Works on any real incoming message from anyone. */
+const scamPatterns = [/kyc/i, /account.{0,10}(suspend|block|expir)/i, /verify.{0,15}(immediately|now|urgent)/i, /bit\.ly|tinyurl|shorturl/i, /otp.{0,10}share/i, /won.{0,10}(prize|lottery)/i, /click.{0,10}link.{0,10}(claim|win)/i];
+async function maybeFlagScam(chatId, m){
+  if(!scamPatterns.some(re=>re.test(m.text))) return;
+  // Best-effort: flag it in Firestore so it renders with the banner (avoid duplicate flags)
+  try {
+    const q = await db.collection('chats').doc(chatId).collection('messages')
+      .where('sentAt','==', m.sentAt).limit(1).get();
+    q.forEach(doc=>{ if(!doc.data().flagged) doc.ref.update({flagged:true}); });
+  } catch(e) { /* non-fatal */ }
+}
+async function explainScam(btn, msgText){
+  const explainEl = btn.parentElement.nextElementSibling;
+  explainEl.classList.add('show');
+  const text = await askSaarthi(
+    `Explain in 2 short sentences, in plain language for a non-technical person, why this message looks like a scam: "${msgText}"`,
+    `Flagged for: urgency language, a shortened/obscured link, or a request tied to OTP/KYC — patterns common in phishing scams. Verify directly with the organization's official app instead of tapping the link.`,
+    "You are Scam Shield, part of the Saarthi messaging app. You explain, plainly and briefly, why a message was flagged as a likely scam."
+  );
+  explainEl.textContent = text;
+}
+
+/* ---------------- compose / send ---------------- */
+const harshPatterns = [
+  {re:/whatever/i, soft:"No worries, let's just go with your call on this."},
+  {re:/fine\.$/i, soft:"Okay, that works for me — thanks for handling it."},
+  {re:/!!!|\?\?\?/, soft:"Could you clarify a bit? Want to make sure I get this right."},
+  {re:/so done|done with this/i, soft:"This has been frustrating — can we find a better way forward together?"},
+  {re:/why (would|did) you/i, soft:"Help me understand your thinking here — what led to this?"},
+  // Common profanity/insults — word-boundary so it doesn't false-positive on unrelated words.
+  {re:/\b(f+u+c*k+\w*|sh+i+t+\w*|b+i+t+c+h+\w*|a+s+s*h+o+l+e+\w*|b+a+s+t+a+r+d+\w*|d+a+m+n+\w*|c+r+a+p+|p+i+s+s+\w*)\b/i, soft:"That's frustrating — here's a calmer way to put it."},
+  {re:/\b(idiot|stupid|moron|dumb(ass)?|loser|pathetic|useless|worthless)\b/i, soft:"I'm frustrated, but let's talk this through without name-calling."},
+  {re:/\b(shut up|screw you|go to hell|i hate you)\b/i, soft:"I need a moment, but I want to work this out with you."},
+  // Hindi/Hinglish profanity, romanized (Latin script) — covers common spelling
+  // variants people actually type on a phone keyboard.
+  {re:/\b(ch+u+t+i+y+a+\w*|m[ao]d+a+r+ *c+h+o+d+\w*|b+e+h+e+n+ *c+h+o+d+\w*|b+h+o+s+d+i+\w*|b+h+e+n+ *k+i+\w*|randi\w*|saala\w*|saali\w*|kutt[ae]\w*|kamin[ae]\w*|haram[iz]a*d+a*\w*|gandu\w*|lodu\w*|chodu\w*|jhaant\w*|tatti\w*)\b/i, soft:"Yeh thoda tez lag sakta hai — ek shaant tareeke se kehte hain."},
+  // Hindi profanity, Devanagari script
+  {re:/(चूतिया|मादरचोद|मदरचोद|बहनचोद|भोसड़ी|भेनचोद|रंडी|कुत्त[ेा]|कमीन[ेा]|हरामज़ाद[ाे]|गांडू|गंडू|साला|साली|तत्ती)/, soft:"यह थोड़ा तीखा लग सकता है — शांत तरीक़े से कहते हैं।"},
+];
+let toneGuardTimer=null, toneGuardGeneralTimer=null;
+function onComposeInput(el){
+  const val = el.value;
+  if(val.length>0) markTyping(); else clearTyping();
+  const tg = document.getElementById('tone-guard');
+  const hit = harshPatterns.find(p=>p.re.test(val));
+  clearTimeout(toneGuardTimer);
+  clearTimeout(toneGuardGeneralTimer);
+  if(hit && val.length>3){
+    tg.classList.add('show');
+    tg.innerHTML = `<div class="head">🛡️ Tone Guard</div>Thinking of a softer version…`;
+    toneGuardTimer = setTimeout(()=> runToneGuardRewrite(val, hit.soft), 300);
+  } else if(val.trim().length > 12 && groqConfigured()){
+    // No local pattern matched, but it's a real sentence — let the AI itself
+    // judge tone once typing pauses, instead of relying only on the fixed list.
+    toneGuardGeneralTimer = setTimeout(async ()=>{
+      const verdict = await askSaarthi(
+        `Message: "${val}"\nDoes this sound harsh, angry, insulting, or likely to hurt the recipient's feelings? Reply with exactly "NONE" if it's fine as-is. Otherwise reply with ONLY a rewritten, warmer version of the same message (same length, same meaning) — nothing else.`,
+        "NONE",
+        "You are Tone Guard, part of a messaging app. You judge whether a message sounds harsh/insulting and, if so, rewrite it more warmly. You reply with exactly NONE when a message is already fine."
+      );
+      if(verdict && verdict.trim().toUpperCase() !== 'NONE' && document.getElementById('compose-input').value === val){
+        tg.classList.add('show');
+        tg.innerHTML = `<div class="head">🛡️ Tone Guard</div>Thinking of a softer version…`;
+        runToneGuardRewrite(val, verdict.trim(), verdict.trim());
+      }
+    }, 900);
+  } else {
+    tg.classList.remove('show');
+  }
+}
+async function runToneGuardRewrite(val, fallbackSoft, precomputed){
+  const tg = document.getElementById('tone-guard');
+  const soft = precomputed || await askSaarthi(
+    `Rewrite this message to sound warmer and less harsh, while keeping the same meaning and roughly the same length. Only return the rewritten message, nothing else. Message: "${val}"`,
+    fallbackSoft,
+    "You are Tone Guard, part of the Saarthi messaging app. You rewrite messages to sound less harsh without changing their meaning."
+  );
+  if(document.getElementById('compose-input').value !== val) return; // user kept typing/changed their mind
+  tg.innerHTML = `<div class="head">🛡️ Tone Guard <span class="mono" style="font-weight:400; font-size:10.5px; color:var(--text-dim); margin-left:auto;">${aiStatusLabel()}</span></div>This might land harsher than you intend.
+    <div class="suggestion">"${escapeHtml(soft)}"</div>
+    <div class="row">
+      <button class="chip-btn" onclick="applyToneGuard('${attrStr(soft)}')">Use this</button>
+      <button class="chip-btn ghost" onclick="document.getElementById('compose-input').focus(); document.getElementById('tone-guard').classList.remove('show')">Edit myself</button>
+      <button class="chip-btn ghost" onclick="document.getElementById('tone-guard').classList.remove('show')">Ignore</button>
+    </div>`;
+}
+function applyToneGuard(text){
+  document.getElementById('compose-input').value = text;
+  document.getElementById('tone-guard').classList.remove('show');
+}
+function onComposeKey(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } }
+async function sendMessage(){
+  const input = document.getElementById('compose-input');
+  const val = input.value.trim();
+  if(!val || !currentChat) return;
+  input.value=''; document.getElementById('tone-guard').classList.remove('show');
+  clearTyping();
+  try {
+    await db.collection('chats').doc(currentChat).collection('messages').add({
+      from: phoneId(currentUser.phone), text: val,
+      sentAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    await db.collection('chats').doc(currentChat).set({
+      lastMessage: val, lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+      hiddenFor: [],
+    }, { merge:true });
+  } catch(e) {
+    console.error('send failed', e);
+    alert("Message couldn't be sent — check your Firebase connection.");
+  }
+}
+
+/* ---------------- smart replies (real, based on the real last message) ---------------- */
+async function renderSmartReplies(){
+  const row = document.getElementById('replies-row');
+  if(!row) return;
+  const fallback = ["Sounds good","Okay!","Got it","Thanks!"];
+  row.innerHTML = fallback.map(r=>`<button class="reply-chip" style="opacity:.5">${r}</button>`).join('');
+  const snap = await db.collection('chats').doc(currentChat).collection('messages').orderBy('sentAt','desc').limit(1).get();
+  if(snap.empty) return;
+  const last = snap.docs[0].data();
+  if(last.from === phoneId(currentUser.phone)) { row.innerHTML = fallback.map(chipHtml).join(''); return; }
+  const raw = await askSaarthi(
+    `Someone just texted me: "${last.text}". Give me 4 short casual reply options in a relaxed texting style (lowercase-friendly, brief, a little emoji use is fine). Return ONLY the 4 replies, one per line, no numbering.`,
+    fallback.join('\n'),
+    "You write short, casual text-message replies matching a relaxed, friendly texting style."
+  );
+  const options = raw.split('\n').map(s=>s.replace(/^[-•\d.]+\s*/,'').trim()).filter(Boolean).slice(0,4);
+  row.innerHTML = (options.length ? options : fallback).map(chipHtml).join('');
+}
+function chipHtml(r){
+  return `<button class="reply-chip" onclick="document.getElementById('compose-input').value='${attrStr(r)}'; document.getElementById('compose-input').focus();">${escapeHtml(r)}</button>`;
+}
+
+/* ---------------- AI emoji suggestions (real, text-only — Groq has no image model) ---------------- */
+async function toggleStickerPanel(){
+  const panel = document.getElementById('sticker-panel');
+  panel.classList.toggle('show');
+  if(!panel.classList.contains('show')) return;
+  panel.innerHTML = `<div class="sub">Thinking…</div>`;
+  const snap = await db.collection('chats').doc(currentChat).collection('messages').orderBy('sentAt','desc').limit(4).get();
+  const lastMsgs = snap.docs.map(d=>d.data().text).reverse().join(' / ') || '(no messages yet)';
+  const fallback = "🌄\n☕\n🎉\n😄";
+  const raw = await askSaarthi(
+    `Based on this recent conversation snippet: "${lastMsgs}", suggest 4 emoji (and only emoji, no words) that would be fun or fitting to send next. Return exactly 4 emoji, one per line, nothing else.`,
+    fallback,
+    "You pick fitting emoji reactions for a text conversation. You have no image-generation model available, so you only ever choose emoji."
+  );
+  const emoji = raw.split('\n').map(s=>s.trim()).filter(Boolean).slice(0,4);
+  panel.innerHTML = (emoji.length?emoji:fallback.split('\n')).map(e=>
+    `<div class="sticker-tile" style="cursor:pointer;" onclick="document.getElementById('compose-input').value+='${e}'; document.getElementById('compose-input').focus();">${e}</div>`
+  ).join('');
+}
+
+/* ---------------- translation (real, general-purpose — works on any chat) ---------------- */
+let translateOn=false;
+async function toggleTranslate(){
+  translateOn = !translateOn;
+  const btn = document.getElementById('translate-btn');
+  if(btn) btn.style.background = translateOn ? 'var(--marigold)' : '';
+  const box = document.getElementById('messages-box');
+  document.getElementById('translate-note')?.remove();
+  if(translateOn){
+    const snap = await db.collection('chats').doc(currentChat).collection('messages').orderBy('sentAt','desc').limit(1).get();
+    if(snap.empty) return;
+    const original = snap.docs[0].data().text;
+    const note = document.createElement('div');
+    note.className='memory-card'; note.id='translate-note';
+    note.innerHTML = `<b>🌐 Live Cultural Translation on</b>Adapting…`;
+    box.appendChild(note); box.scrollTop=box.scrollHeight;
+    const text = await askSaarthi(
+      `Adapt this message so its warmth and intent come through clearly for a reader from a different cultural/English-dialect background — don't just translate word for word, adjust idiom and formality. Return only the adapted sentence. Message: "${original}"`,
+      `"${original}" (connect your AI proxy for a live cultural adaptation)`,
+      "You adapt casual messages across English dialects and cultures, preserving warmth while adjusting idiom and formality for the reader."
+    );
+    note.innerHTML = `<b>🌐 Live Cultural Translation on</b>${escapeHtml(text)}`;
+  }
+}
+
+/* ---------------- catch me up (real — summarizes the real group history) ---------------- */
+async function openCatchUp(){
+  const c = myChats[currentChat];
+  openModal(`<button class="modal-close" onclick="closeModal()">✕</button><h3>⏱️ Catch-Me-Up</h3><div class="sub">${chatDisplayName(c)} · summarizing…</div>`);
+  const snap = await db.collection('chats').doc(currentChat).collection('messages').orderBy('sentAt','asc').limitToLast(100).get();
+  const transcript = snap.docs.map(d=>{ const m=d.data(); const who=(c.participantNames||{})[m.from]||m.from; return `${who}: ${m.text}`; }).join('\n');
+  if(!transcript){ openModal(`<button class="modal-close" onclick="closeModal()">✕</button><h3>⏱️ Catch-Me-Up</h3><div class="sub">No messages yet in this group.</div>`); return; }
+  const raw = await askSaarthi(
+    `Summarize this group chat transcript into 2-4 short topics. For each topic give a short bold-worthy title and 1-2 bullet points of what was said. Transcript:\n${transcript}`,
+    "Connect your AI proxy to get a real topic-organized summary of this group's messages.",
+    "You summarize busy group chats into concise, topic-organized catch-up summaries for someone who was away."
+  );
+  const bodyHtml = raw.split(/\n\n+/).map(block=>{
+    const lines = block.split('\n').filter(Boolean);
+    if(!lines.length) return '';
+    const title = lines[0].replace(/^[#*\s]+/,'').replace(/:$/,'');
+    const bullets = lines.slice(1).map(l=>`<li>${escapeHtml(l.replace(/^[-•*]\s*/,''))}</li>`).join('');
+    return `<div class="topic"><div class="th">${escapeHtml(title)}</div><ul>${bullets||'<li>'+escapeHtml(lines[0])+'</li>'}</ul></div>`;
+  }).join('');
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>⏱️ Catch-Me-Up</h3>
+    <div class="sub">${chatDisplayName(c)} · organized by topic · ${aiStatusLabel()}</div>
+    ${bodyHtml}
+    <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="closeModal()">Got it</button>
+  `);
+}
+
+/* ---------------- calls: real WebRTC (audio/video) + real Whisper captions ----------------
+   Uses Firestore purely as a signaling channel (a standard, well-documented
+   WebRTC pattern) and free public STUN servers for NAT traversal. This
+   genuinely places a live audio/video call between two real browsers.
+   Caveat: some networks (strict corporate firewalls, certain mobile
+   carriers) block direct peer connections and need a paid TURN relay to
+   get through — STUN alone works for most home/mobile networks, but not
+   all. If a call won't connect on a given network, that's why. */
+const rtcConfig = { iceServers: [{ urls: ['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302'] }] };
+let pc = null, localStream = null, activeCallId = null, callRole = null, activeSince = null;
+let captionRecorder = null, callTranscriptChunks = [];
+
+/* ---------------- media access: diagnose *why* mic/camera failed instead of
+   showing one generic alert. Calls need getUserMedia, which browsers only
+   grant on a "secure context" (https://, or http://localhost). If this file
+   is opened as file:// or content:// (e.g. a file opened straight from
+   WhatsApp/Drive/a chat app), the browser blocks camera/mic access before
+   any permission prompt even appears — no code fix can work around that,
+   the page has to be served over https or localhost. ---------------- */
+function explainMediaFailure(reason, videoRequested){
+  let title = "Couldn't start the call";
+  let body = "";
+  if(reason === 'insecure-context'){
+    title = "This page needs to be loaded over HTTPS";
+    body = `Camera and microphone access is blocked by the browser unless the page is served securely
+      (<span class="mono">https://</span>) or from <span class="mono">http://localhost</span>.
+      Right now this file is open as <span class="mono">${escapeHtml(location.protocol)}//</span>, which every
+      modern browser treats as insecure for calling — this is a browser rule, not a bug in Saarthi, and it
+      can't be fixed with a permissions setting.<br><br>
+      <b>To fix it:</b> host this file somewhere with HTTPS (Firebase Hosting, GitHub Pages, Netlify, Vercel…)
+      or run it from a local dev server (e.g. <span class="mono">npx serve</span>) and open it via
+      <span class="mono">http://localhost</span>. Opening the file directly from a file manager, or from inside
+      an app like WhatsApp/Drive's built-in viewer, will never allow calls.`;
+  } else if(reason === 'no-api'){
+    title = "This browser can't make calls";
+    body = `This browser (or in-app browser) doesn't expose the camera/microphone API at all. This is common
+      inside "mini browsers" embedded in other apps (chat apps, social apps) — try opening the page in a full
+      browser like Chrome, Safari, or Firefox instead.`;
+  } else if(reason === 'denied'){
+    title = "Microphone/camera permission was denied";
+    body = `Your browser blocked the request. Tap the padlock/site-info icon next to the address bar, allow
+      camera and microphone for this site, then reload and try calling again.`;
+  } else if(reason === 'not-found'){
+    title = "No microphone or camera found";
+    body = `This device doesn't seem to have a working microphone${videoRequested?' or camera':''} for the
+      browser to use. Voice calls need a microphone; video calls need a camera too.`;
+  } else if(reason === 'in-use'){
+    title = "Microphone/camera is already in use";
+    body = `Another app or browser tab is using the camera or microphone right now. Close it and try again.`;
+  } else {
+    body = `Couldn't access your microphone/camera. Check your browser's site permissions and try again.`;
+  }
+  openModal(`<h3>${title}</h3><div class="sub" style="line-height:1.6;">${body}</div>
+    <button class="btn btn-primary" style="width:100%; margin-top:14px;" onclick="closeModal()">Got it</button>`);
+}
+async function getCallMediaStream(video){
+  if(!window.isSecureContext){ explainMediaFailure('insecure-context'); return null; }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ explainMediaFailure('no-api'); return null; }
+  try {
+    return await navigator.mediaDevices.getUserMedia({ audio:true, video });
+  } catch(e){
+    if(e.name === 'NotAllowedError' || e.name === 'SecurityError') explainMediaFailure('denied');
+    else if(e.name === 'NotFoundError' || e.name === 'OverconstrainedError') explainMediaFailure('not-found', video);
+    else if(e.name === 'NotReadableError') explainMediaFailure('in-use');
+    else explainMediaFailure('other');
+    return null;
+  }
+}
+
+function listenForIncomingCalls(){
+  if(!firebaseReady) return;
+  if(incomingCallUnsub) incomingCallUnsub();
+  incomingCallUnsub = db.collection('calls')
+    .where('to','==', phoneId(currentUser.phone))
+    .where('status','==','ringing')
+    .onSnapshot(snap=>{
+      snap.docChanges().forEach(change=>{
+        if(change.type==='added') showIncomingCallToast(change.doc.id, change.doc.data());
+      });
+    }, err=>console.error('call listener error', err));
+}
+function showIncomingCallToast(callId, call){
+  const toast = document.createElement('div');
+  toast.className='toast'; toast.id='incoming-'+callId;
+  toast.innerHTML = `<b>📞 Incoming ${call.video?'video':'voice'} call</b><p>${call.fromName||'Someone'} is calling you.</p>
+    <div class="row">
+      <button class="chip-btn" onclick="answerCall('${callId}'); this.closest('.toast').remove();">Accept</button>
+      <button class="chip-btn ghost" onclick="declineCall('${callId}'); this.closest('.toast').remove();">Decline</button>
+    </div>`;
+  document.body.appendChild(toast);
+}
+async function declineCall(callId){
+  await db.collection('calls').doc(callId).set({
+    status:'declined', durationSec:0, endedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  }, {merge:true});
+}
+function setupPeerConnection(callId, role){
+  pc = new RTCPeerConnection(rtcConfig);
+  const candidatesCol = db.collection('calls').doc(callId).collection(role==='caller' ? 'callerCandidates' : 'calleeCandidates');
+  pc.onicecandidate = (e)=>{ if(e.candidate) candidatesCol.add(e.candidate.toJSON()); };
+  pc.ontrack = (e)=>{
+    const remoteVideo = document.getElementById('remote-video');
+    if(remoteVideo){
+      remoteVideo.srcObject = remoteVideo.srcObject || new MediaStream();
+      remoteVideo.srcObject.addTrack(e.track);
+    }
+  };
+  return pc;
+}
+async function startCall(chatId, video){
+  let c = myChats[chatId];
+  if(!c){
+    if(!firebaseReady){ alert("Connect Firebase first (see FIREBASE_CONFIG) — calls need it for signaling."); return; }
+    const snap = await db.collection('chats').doc(chatId).get();
+    if(!snap.exists){ alert("Couldn't find that chat."); return; }
+    c = snap.data();
+  }
+  if(c.isGroup){ alert("Group calling isn't wired up yet — start a call from a 1:1 chat."); return; }
+  if(!firebaseReady){ alert("Connect Firebase first (see FIREBASE_CONFIG) — calls need it for signaling."); return; }
+  const toId = (c.participants||[]).find(p=>p!==phoneId(currentUser.phone));
+  const toName = (c.participantNames||{})[toId] || toId;
+  localStream = await getCallMediaStream(video);
+  if(!localStream) return;
+  activeSince = null;
+  const callRef = await db.collection('calls').add({
+    from: phoneId(currentUser.phone), fromName: currentUser.name,
+    to: toId, toName, video, status:'ringing',
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  });
+  activeCallId = callRef.id; callRole = 'caller';
+  openCallModal(toName, video);
+  setupPeerConnection(callRef.id, 'caller');
+  localStream.getTracks().forEach(t=>pc.addTrack(t, localStream));
+  const localVideo = document.getElementById('local-video');
+  if(localVideo) localVideo.srcObject = localStream;
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  await callRef.set({ offer: { type: offer.type, sdp: offer.sdp } }, { merge:true });
+  callRef.onSnapshot(snap=>{
+    const data = snap.data();
+    if(!data) return;
+    if(data.answer && pc.currentRemoteDescription===null){
+      pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+      activeSince = Date.now();
+    }
+    if(data.status==='declined' || data.status==='ended'){ endCall(); }
+  });
+  db.collection('calls').doc(callRef.id).collection('calleeCandidates').onSnapshot(snap=>{
+    snap.docChanges().forEach(ch=>{ if(ch.type==='added') pc.addIceCandidate(new RTCIceCandidate(ch.doc.data())); });
+  });
+  startCaptioning(toName);
+}
+async function answerCall(callId){
+  const ref = db.collection('calls').doc(callId);
+  const snap = await ref.get();
+  const call = snap.data();
+  if(!call) return;
+  localStream = await getCallMediaStream(!!call.video);
+  if(!localStream) return;
+  activeCallId = callId; callRole = 'callee';
+  activeSince = Date.now();
+  openCallModal(call.fromName || 'Caller', !!call.video);
+  setupPeerConnection(callId, 'callee');
+  localStream.getTracks().forEach(t=>pc.addTrack(t, localStream));
+  const localVideo = document.getElementById('local-video');
+  if(localVideo) localVideo.srcObject = localStream;
+  await pc.setRemoteDescription(new RTCSessionDescription(call.offer));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  await ref.set({ answer: { type: answer.type, sdp: answer.sdp }, status:'active' }, { merge:true });
+  ref.onSnapshot(snap2=>{ const d=snap2.data(); if(d && d.status==='ended') endCall(); });
+  db.collection('calls').doc(callId).collection('callerCandidates').onSnapshot(snap=>{
+    snap.docChanges().forEach(ch=>{ if(ch.type==='added') pc.addIceCandidate(new RTCIceCandidate(ch.doc.data())); });
+  });
+  startCaptioning(call.fromName || 'Caller');
+}
+function openCallModal(otherName, video){
+  callTranscriptChunks = [];
+  openModal(`
+    <div class="call-modal">
+      <h3>📞 ${otherName}</h3>
+      <div class="video-box" style="position:relative;">
+        ${video ? '<video id="remote-video" autoplay playsinline style="width:100%; border-radius:10px; background:#000;"></video><video id="local-video" autoplay playsinline muted style="width:90px; position:absolute; bottom:8px; right:8px; border-radius:8px; background:#000;"></video>' : '<div style="padding:30px; text-align:center;">🎙️ Voice call in progress</div><audio id="remote-video" autoplay></audio>'}
+        <div class="caption-ticker" id="caption-line">Connecting…</div>
+      </div>
+      <div class="call-actions">
+        <button style="background:var(--coral); color:#fff;" onclick="endCall()" title="End call">📵</button>
+      </div>
+    </div>`);
+}
+function startCaptioning(otherName){
+  if(!groqConfigured() || !window.MediaRecorder) return;
+  const el = document.getElementById('caption-line');
+  if(el) el.textContent = "Live captions on (real speech-to-text via Groq Whisper)";
+  try {
+    captionRecorder = new MediaRecorder(localStream);
+    captionRecorder.ondataavailable = async (e)=>{
+      if(e.data.size < 2000) return;
+      const text = await transcribeAudio(e.data);
+      if(text){
+        callTranscriptChunks.push(`${currentUser.name}: ${text}`);
+        const capEl = document.getElementById('caption-line');
+        if(capEl) capEl.textContent = text;
+      }
+    };
+    captionRecorder.start(8000); // flush a chunk every 8s -> real rolling captions
+  } catch(e) { console.warn("Captioning unavailable:", e); }
+}
+async function endCall(){
+  if(captionRecorder && captionRecorder.state !== 'inactive') captionRecorder.stop();
+  if(pc){ pc.close(); pc = null; }
+  if(localStream){ localStream.getTracks().forEach(t=>t.stop()); localStream = null; }
+  if(activeCallId){
+    try {
+      const snap = await db.collection('calls').doc(activeCallId).get();
+      const existingStatus = snap.data()?.status;
+      const durationSec = activeSince ? Math.round((Date.now()-activeSince)/1000) : 0;
+      let finalStatus;
+      if(existingStatus === 'declined') finalStatus = 'declined';
+      else if(activeSince) finalStatus = 'completed';
+      else finalStatus = 'missed';
+      await db.collection('calls').doc(activeCallId).set({
+        status: finalStatus, durationSec, endedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge:true });
+    } catch(e) { console.warn('call history write failed', e); }
+  }
+  const transcript = callTranscriptChunks.join(' ');
+  openModal(`<h3>Call ended</h3><div class="sub">${transcript ? 'summarizing…' : 'No captioned speech was captured.'}</div>`);
+  if(transcript){
+    const text = await askSaarthi(
+      `Write a 2-sentence summary of this call transcript: "${transcript}"`,
+      "Connect your AI proxy to get a real summary of what was actually said on this call.",
+      "You are Call Companion, part of the Saarthi messaging app. You write brief, useful after-call summaries from a real transcript."
+    );
+    openModal(`
+      <h3>Call ended</h3>
+      <div class="sub">${aiStatusLabel()}</div>
+      <div class="summary-card"><b>Call Companion summary</b><br><br>${escapeHtml(text)}</div>
+      <button class="btn btn-primary" style="width:100%; margin-top:14px;" onclick="closeModal()">Done</button>`);
+  } else {
+    closeModal();
+  }
+  activeCallId = null; callRole = null; activeSince = null;
+}
+
+/* ---------------- calls list (real call history, synced from Firestore) ---------------- */
+let callHistoryUnsubs = [];
+let callHistoryFrom = {}, callHistoryTo = {};
+function listenToCallHistory(){
+  if(!firebaseReady) return;
+  callHistoryUnsubs.forEach(u=>u());
+  const myId = phoneId(currentUser.phone);
+  const u1 = db.collection('calls').where('from','==', myId).onSnapshot(snap=>{
+    callHistoryFrom = {}; snap.forEach(d=> callHistoryFrom[d.id] = d.data());
+    renderCalls();
+  }, err=>console.error('call history (from) error', err));
+  const u2 = db.collection('calls').where('to','==', myId).onSnapshot(snap=>{
+    callHistoryTo = {}; snap.forEach(d=> callHistoryTo[d.id] = d.data());
+    renderCalls();
+  }, err=>console.error('call history (to) error', err));
+  callHistoryUnsubs = [u1, u2];
+}
+function formatCallDuration(sec){
+  sec = sec || 0;
+  const m = Math.floor(sec/60), s = sec%60;
+  return `${m}m ${s}s`;
+}
+function renderCalls(){
+  const list = document.getElementById('calls-list');
+  if(!list) return;
+  if(!firebaseReady){ list.innerHTML = `<div class="sub" style="padding:10px 0;">Connect Firebase (see FIREBASE_CONFIG) to see call history.</div>`; return; }
+  const myId = phoneId(currentUser.phone);
+  const merged = { ...callHistoryFrom, ...callHistoryTo };
+  const entries = Object.entries(merged)
+    .filter(([id,call]) => call.status && call.status!=='ringing') // hide calls still in progress elsewhere
+    .sort((a,b)=> (b[1].createdAt?.toMillis?.()||0) - (a[1].createdAt?.toMillis?.()||0))
+    .slice(0, 100);
+  if(!entries.length){
+    list.innerHTML = `<div class="sub" style="padding:10px 0;">No calls yet. Start one from inside any 1:1 chat (📞 voice / 🎥 video in the chat header).</div>`;
+    return;
+  }
+  list.innerHTML = entries.map(([id, call])=>{
+    const outgoing = call.from === myId;
+    const otherName = outgoing ? (call.toName || call.to) : (call.fromName || call.from);
+    const otherId = outgoing ? call.to : call.from;
+    const typeIcon = call.video ? '🎥' : '📞';
+    const dirIcon = outgoing ? '↗️' : (call.status==='missed' ? '↘️' : '↙️');
+    let statusLabel, missedColor='';
+    if(call.status==='completed') statusLabel = formatCallDuration(call.durationSec);
+    else if(call.status==='declined'){ statusLabel = outgoing ? 'Declined' : 'You declined'; if(!outgoing) missedColor='color:var(--coral);'; }
+    else if(call.status==='missed'){ statusLabel = outgoing ? 'No answer' : 'Missed call'; if(!outgoing) missedColor='color:var(--coral);'; }
+    else statusLabel = 'Call ended';
+    const time = call.createdAt?.toDate ? call.createdAt.toDate().toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+    const safeName = String(otherName).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return `
+      <div class="chat-item">
+        <div class="avatar" style="background:${call.video?'#F2A93B':'#2BB3A3'}">${chatInitials(otherName)}</div>
+        <div class="chat-meta" style="cursor:pointer;" onclick="callBackFrom('${otherId}', '${safeName}', false)">
+          <div class="top"><span class="name">${escapeHtml(otherName)}</span><span class="time">${time}</span></div>
+          <div class="preview" style="${missedColor}">${typeIcon} ${dirIcon} ${statusLabel}</div>
+        </div>
+        <button class="hbtn" title="Voice call back" onclick="callBackFrom('${otherId}', '${safeName}', false)">📞</button>
+        <button class="hbtn" title="Video call back" onclick="callBackFrom('${otherId}', '${safeName}', true)">🎥</button>
+      </div>`;
+  }).join('');
+}
+async function callBackFrom(otherId, otherName, video){
+  const chatId = chatIdFor(currentUser.phone, otherId);
+  const ref = db.collection('chats').doc(chatId);
+  const snap = await ref.get();
+  if(!snap.exists){
+    await ref.set({
+      isGroup:false, participants:[phoneId(currentUser.phone), phoneId(otherId)],
+      participantNames:{ [phoneId(currentUser.phone)]: currentUser.name, [phoneId(otherId)]: otherName },
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      lastMessage:'', lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+  startCall(chatId, video);
+}
+
+/* ---------------- greeting assistant (general-purpose, real) ---------------- */
+function draftGreeting(){
+  openModal(`
+    <h3>🪔 Greeting Assistant</h3>
+    <input id="greet-occasion" placeholder="Occasion (e.g. Diwali, birthday, Eid)" style="width:100%; margin:10px 0 8px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg3); color:var(--text);">
+    <input id="greet-recipient" placeholder="Who is it for? (e.g. a close friend)" style="width:100%; margin:0 0 10px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg3); color:var(--text);">
+    <button class="btn btn-primary" style="width:100%;" onclick="generateGreeting()">Draft it</button>
+  `);
+}
+async function generateGreeting(){
+  const occasion = document.getElementById('greet-occasion').value.trim() || 'a celebration';
+  const recipient = document.getElementById('greet-recipient').value.trim() || 'a friend';
+  openModal(`<h3>🪔 ${occasion} greeting</h3><div class="sub">Drafting…</div>`);
+  const text = await askSaarthi(
+    `Write one short, warm ${occasion} greeting message suitable to send over text to ${recipient}. Return only the message.`,
+    `Connect your AI proxy to get a real drafted greeting for ${occasion}.`,
+    "You write short, culturally respectful festival/celebration greetings suitable for texting."
+  );
+  openModal(`
+    <h3>🪔 ${escapeHtml(occasion)} greeting</h3>
+    <div class="sub">Ready to copy · ${aiStatusLabel()}</div>
+    <div class="suggestion" style="background:var(--bg3); padding:12px 14px; border-radius:10px; font-style:italic;">"${escapeHtml(text)}"</div>
+    <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="closeModal()">Done</button>`);
+}
+
+/* ---------------- settings switches ---------------- */
+function toggleSwitch(el){ el.classList.toggle('on'); if(el.id==='typing-indicator-toggle' || el.id==='online-status-toggle') renderChatHeader(); }
+
+/* ---------------- modal helpers ---------------- */
+function openModal(html){ document.getElementById('modal-body').innerHTML = html; document.getElementById('modal-backdrop').classList.add('show'); }
+function closeModal(){ document.getElementById('modal-backdrop').classList.remove('show'); }
+document.getElementById('modal-backdrop').addEventListener('click', e=>{ if(e.target.id==='modal-backdrop') closeModal(); });
+
+/* ---------------- wellbeing nudge (based on real elapsed session time) ---------------- */
+const WELLBEING_THRESHOLD_MS = 20*60*1000;
+const sessionStartedAt = Date.now();
+let wellbeingShown = false;
+setInterval(()=>{
+  if(wellbeingShown || !currentUser) return;
+  if(Date.now()-sessionStartedAt < WELLBEING_THRESHOLD_MS) return;
+  wellbeingShown = true;
+  const mins = Math.round((Date.now()-sessionStartedAt)/60000);
+  const toast = document.createElement('div');
+  toast.className='toast';
+  toast.innerHTML = `<b>🌙 Digital Wellbeing</b><p>You've been in Saarthi for about ${mins} minutes this session.</p>
+    <div class="row"><button class="chip-btn ghost" onclick="this.closest('.toast').remove()">Dismiss</button></div>`;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(), 15000);
+}, 30000);
+
+/* ================================================================
+   BOOT
+   ================================================================ */
+initFirebase();
+renderCalls();
+updateAIStatusUI();
+
+</script>
+</body>
+</html>
