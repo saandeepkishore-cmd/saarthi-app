@@ -330,11 +330,82 @@ button{font-family:inherit; cursor:pointer;}
   .mobile-back-btn{ display:flex; }
   .messages{ padding:16px; }
   .composer{ padding:10px 12px 14px; }
-  .chat-header{ padding:12px 14px; }
+  .composer-row{ gap:6px; }
+  .icon-btn{ width:34px; height:34px; font-size:14px; flex-shrink:0; }
+  .chat-header{ padding:12px 14px; gap:8px; }
+  .chat-header .hbtn{ width:34px; height:34px; font-size:14px; }
   .settings-wrap, .about-wrap{ padding:20px 18px; }
   .modal{ width:92vw; padding:20px; }
   .bubble{ max-width:82%; }
+  .list-head-actions{ flex-wrap:wrap; }
+  .rail{ padding-bottom:calc(env(safe-area-inset-bottom,0px)); }
+  .composer{ padding-bottom:calc(20px + env(safe-area-inset-bottom,0px)); }
+  .rail-nav{ min-width:0; }
+  .rail-btn{ flex-shrink:1; min-width:34px; }
 }
+@media (max-width:360px){
+  .rail-btn{ width:36px; height:36px; font-size:16px; }
+}
+
+/* ---------- avatar image support (profile pictures) ---------- */
+.avatar{ background-size:cover; background-position:center; overflow:hidden; }
+.avatar img{ width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+
+/* ---------- unread state in chat list ---------- */
+.chat-item.unread .name{ font-weight:800; }
+.chat-item.unread .preview{ color:var(--text); font-weight:600; }
+.unread-badge{ background:var(--marigold); color:#14213D; font-size:10.5px; font-weight:800; border-radius:20px; padding:2px 7px; min-width:18px; text-align:center; }
+
+/* ---------- big incoming call overlay ---------- */
+.incoming-call-overlay{
+  position:fixed; inset:0; z-index:900; background:linear-gradient(160deg,#14213D,#0A1122);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; color:#F6F1E8;
+  animation:fadeUp .3s ease;
+}
+.ico-avatar{
+  width:120px; height:120px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:42px; font-weight:800; color:#fff; margin-bottom:22px; position:relative;
+  animation:icoPulse 1.6s infinite;
+}
+@keyframes icoPulse{
+  0%{ box-shadow:0 0 0 0 rgba(242,169,59,.5); } 70%{ box-shadow:0 0 0 26px rgba(242,169,59,0); } 100%{ box-shadow:0 0 0 0 rgba(242,169,59,0); }
+}
+.ico-kind{ font-size:14px; color:#c7cfe0; margin-bottom:6px; }
+.ico-name{ font-size:26px; font-family:'Newsreader',serif; margin-bottom:36px; }
+.ico-actions{ display:flex; gap:46px; }
+.ico-btn{ display:flex; flex-direction:column; align-items:center; gap:8px; background:none; border:none; color:#F6F1E8; font-size:12.5px; }
+.ico-btn .circle{ width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:26px; }
+.ico-btn.accept .circle{ background:var(--teal); }
+.ico-btn.decline .circle{ background:var(--coral); }
+
+/* ---------- status feature ---------- */
+.status-add{ width:64px; height:64px; border-radius:50%; border:2px dashed var(--border); display:flex; align-items:center; justify-content:center; font-size:22px; color:var(--text-dim); background:var(--bg3); }
+.status-viewer{ position:fixed; inset:0; z-index:920; background:#000; display:flex; align-items:center; justify-content:center; flex-direction:column; }
+.status-viewer .bar{ position:absolute; top:10px; left:10px; right:10px; height:3px; background:rgba(255,255,255,.25); border-radius:2px; overflow:hidden; }
+.status-viewer .bar .fill{ height:100%; width:0%; background:#fff; }
+.status-viewer .head{ position:absolute; top:22px; left:14px; right:14px; display:flex; align-items:center; gap:10px; color:#fff; font-size:13px; }
+.status-viewer .content{ max-width:92vw; max-height:78vh; }
+.status-viewer .content img, .status-viewer .content video{ max-width:92vw; max-height:78vh; border-radius:8px; }
+.status-viewer .close-x{ position:absolute; top:20px; right:14px; background:none; border:none; color:#fff; font-size:20px; }
+.status-viewer .link-card{ background:#1C2740; color:#F6F1E8; padding:24px; border-radius:14px; max-width:80vw; word-break:break-all; text-align:center; }
+
+/* ---------- document message bubble ---------- */
+.msg-doc{ display:flex; align-items:center; gap:10px; padding:6px 4px; }
+.msg-doc .ico{ width:36px; height:36px; border-radius:8px; background:var(--marigold); color:#14213D; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+.msg-doc .meta{ min-width:0; }
+.msg-doc .meta .fn{ font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px; }
+.msg-doc .meta .fs{ font-size:11px; opacity:.7; }
+
+/* ---------- live location bubble ---------- */
+.msg-location{ width:220px; }
+.msg-location iframe{ width:100%; height:130px; border:0; border-radius:10px 10px 0 0; display:block; }
+.msg-location .loc-foot{ padding:8px 10px; font-size:12px; }
+.msg-location .loc-foot a{ color:var(--teal); font-weight:700; text-decoration:none; }
+.loc-live-dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--coral); margin-right:4px; animation:bounce 1.2s infinite; }
+
+/* ---------- chat lock ---------- */
+.chat-item.locked .preview{ filter:blur(3px); user-select:none; }
+.lock-pill{ font-size:11px; }
 </style>
 </head>
 <body data-theme="light">
@@ -445,7 +516,7 @@ button{font-family:inherit; cursor:pointer;}
       <div class="sub">Real-time, synced across every device you sign in on</div>
     </div>
     <div class="search"><input placeholder="Search conversations" oninput="filterChats(this.value)"></div>
-    <div style="display:flex; gap:8px; padding:0 20px 10px;">
+    <div class="list-head-actions" style="display:flex; gap:8px; padding:0 20px 10px;">
       <button class="chip-btn" onclick="switchView('people', document.querySelector('[data-view=people]'))">+ New chat</button>
       <button class="chip-btn ghost" onclick="openNewGroupModal()">+ New group</button>
       <button class="chip-btn ghost" onclick="draftGreeting()">🪔 Greeting</button>
@@ -478,7 +549,12 @@ button{font-family:inherit; cursor:pointer;}
 
   <!-- PEOPLE VIEW (real directory of everyone who has signed up) -->
   <div class="status-grid" id="view-people" style="display:none; width:100%; padding:20px;">
-    <h2>People</h2>
+    <h2>Status</h2>
+    <div class="sub" style="color:var(--text-dim); font-size:13px; margin-bottom:14px;">Share a photo, video, or link that disappears after 24 hours. Only people you've chatted with can see it.</div>
+    <div class="stories" id="status-row"></div>
+    <input type="file" id="status-file-input" accept="image/*,video/*" style="display:none" onchange="handleStatusFile(event)">
+
+    <h2 style="margin-top:30px;">People</h2>
     <div class="sub" style="color:var(--text-dim); font-size:13px; margin-bottom:14px;">Everyone who has created an account on this app. Tap + to add someone as a contact and start chatting.</div>
     <div class="search"><input id="people-search" placeholder="Search by name or phone number" oninput="renderPeopleList(this.value)"></div>
     <div id="people-list" style="margin-top:10px;"></div>
@@ -525,6 +601,12 @@ button{font-family:inherit; cursor:pointer;}
 
     <div class="settings-section">
       <h4>Account</h4>
+      <div class="setting-row">
+        <div class="avatar" id="my-avatar-preview" style="background:#2BB3A3; width:56px; height:56px; font-size:20px;">?</div>
+        <div class="txt"><b>Profile photo</b><span>Visible to your contacts in chats and calls</span></div>
+        <button class="chip-btn ghost" onclick="document.getElementById('profile-photo-input').click()">Change</button>
+        <input type="file" id="profile-photo-input" accept="image/*" style="display:none" onchange="handleProfilePhotoPick(event)">
+      </div>
       <div class="setting-row"><div class="txt"><b>Signed in as</b><span id="account-name-display">—</span></div></div>
       <div class="setting-row"><div class="txt"><b>Log out</b><span>Keeps your account — log back in anytime with your number</span></div><button class="chip-btn ghost" onclick="logOutAccount()">Log out</button></div>
       <div class="setting-row"><div class="txt"><b>Delete my account</b><span>Removes your profile from the People directory permanently</span></div><button class="chip-btn" style="background:var(--coral); color:#fff;" onclick="confirmDeleteAccount()">Delete account</button></div>
@@ -560,6 +642,8 @@ button{font-family:inherit; cursor:pointer;}
 <div class="modal-backdrop" id="modal-backdrop">
   <div class="modal" id="modal-body"></div>
 </div>
+<div id="incoming-call-root"></div>
+<div id="status-viewer-root"></div>
 
 <!-- Firebase powers real accounts, real-time messages, and call signaling
      between everyone using this app. It needs its own free project config
@@ -697,6 +781,44 @@ let peopleUnsub = null;
 let incomingCallUnsub = null;
 const stateFlags = { onboardStep:0 };
 
+/* profile photos: phone -> photoURL, kept live via a single users listener */
+let userPhotoCache = {};
+let usersPhotoUnsub = null;
+function listenToUserPhotos(){
+  if(!firebaseReady) return;
+  if(usersPhotoUnsub) usersPhotoUnsub();
+  usersPhotoUnsub = db.collection('users').onSnapshot(snap=>{
+    snap.docChanges().forEach(ch=>{
+      const d = ch.doc.data();
+      userPhotoCache[d.phone] = d.photoURL || null;
+    });
+    const me = userPhotoCache[currentUser?.phone];
+    const prev = document.getElementById('my-avatar-preview');
+    if(prev){ prev.innerHTML = me ? `<img src="${me}" alt="">` : (currentUser?.name||'?').slice(0,1).toUpperCase(); }
+    renderChatList(document.querySelector('.search input')?.value||'');
+    if(currentChat) renderChatHeader();
+  }, err=>console.warn('user photos listener error', err));
+}
+/* Builds avatar HTML with a photo if available, else initials on a color. */
+function avatarHtml(name, phone, bg){
+  const photo = phone ? userPhotoCache[phoneId(phone)] : null;
+  if(photo) return `<img src="${photo}" alt="${escapeHtml(name||'')}">`;
+  return chatInitials(name);
+}
+
+/* chat lock: client-side only (per-browser), password hashed with SHA-256
+   and kept in localStorage. This is a privacy screen against casual
+   snooping on this device — it is not end-to-end encryption, and it does
+   not sync across devices or protect the data inside Firestore itself. */
+const unlockedChatsThisSession = new Set();
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function chatLockKey(chatId){ return `saarthi_lock_${chatId}`; }
+function isChatLocked(chatId){ return !!localStorage.getItem(chatLockKey(chatId)); }
+function isChatUnlockedNow(chatId){ return !isChatLocked(chatId) || unlockedChatsThisSession.has(chatId); }
+
 function phoneId(p){ return String(p).replace(/\D/g,''); }
 function chatIdFor(phoneA, phoneB){
   const a = phoneId(phoneA), b = phoneId(phoneB);
@@ -824,6 +946,8 @@ function startApp(){
   listenToMyChats();
   listenForIncomingCalls();
   listenToCallHistory();
+  listenToUserPhotos();
+  listenToStatuses();
   switchView('chats', document.querySelector('.rail-btn[data-view="chats"]'));
 }
 let presenceHeartbeatId = null;
@@ -849,9 +973,11 @@ function resetToGate(){
   if(myChatsUnsub) myChatsUnsub();
   if(messagesUnsub) messagesUnsub();
   if(incomingCallUnsub) incomingCallUnsub();
+  if(usersPhotoUnsub) usersPhotoUnsub();
+  if(statusesUnsub) statusesUnsub();
   callHistoryUnsubs.forEach(u=>u()); callHistoryUnsubs=[];
   stopPresenceTracking();
-  currentUser = null; currentChat = null; myChats = {};
+  currentUser = null; currentChat = null; myChats = {}; userPhotoCache = {}; unlockedChatsThisSession.clear();
   document.getElementById('app').classList.remove('ready');
   const gate = document.getElementById('account-gate');
   document.getElementById('signup-name').value = '';
@@ -883,6 +1009,37 @@ async function deleteAccount(){
   resetToGate();
 }
 
+/* ---------------- profile photo ---------------- */
+async function handleProfilePhotoPick(e){
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  if(!file.type || !file.type.startsWith('image/')){ alert('Please choose an image file.'); return; }
+  if(file.size > 10*1024*1024){ alert('That image is too large — please pick one under 10MB.'); return; }
+  if(!imgbbConfigured()){ alert("Add a free ImgBB API key first — see CONFIG #3 (IMGBB_API_KEY) near the top of the script."); return; }
+  if(!firebaseReady){ alert("Connect Firebase first (see FIREBASE_CONFIG)."); return; }
+  const preview = document.getElementById('my-avatar-preview');
+  if(preview) preview.innerHTML = '<i style="font-size:11px;">Uploading…</i>';
+  try {
+    const base64 = await fileToBase64(file);
+    const form = new FormData();
+    form.append('key', IMGBB_API_KEY);
+    form.append('image', base64);
+    const res = await fetch('https://api.imgbb.com/1/upload', { method:'POST', body: form });
+    const data = await res.json();
+    if(!data || !data.success) throw new Error(data?.error?.message || 'ImgBB upload failed');
+    const url = data.data.url;
+    await db.collection('users').doc(currentUser.phone).set({ photoURL: url }, { merge:true });
+    userPhotoCache[currentUser.phone] = url;
+    if(preview) preview.innerHTML = `<img src="${url}" alt="">`;
+    renderChatList(document.querySelector('.search input')?.value||'');
+  } catch(err){
+    console.error('profile photo upload failed', err);
+    alert("Couldn't upload your profile photo — check your ImgBB API key and connection.");
+    if(preview) preview.innerHTML = (currentUser.name||'?').slice(0,1).toUpperCase();
+  }
+}
+
 /* ---------------- theme ---------------- */
 function toggleTheme(e){
   const body = document.body;
@@ -910,7 +1067,16 @@ function switchView(view, btn){
   } else {
     document.getElementById('view-'+view).style.display = (view==='settings'||view==='about'||view==='people')?'block':'flex';
   }
-  if(view==='settings'){ updateAIStatusUI(); const el=document.getElementById('account-name-display'); if(el && currentUser) el.textContent = `${currentUser.name} · +${currentUser.phone}`; }
+  if(view==='settings'){
+    updateAIStatusUI();
+    const el=document.getElementById('account-name-display'); if(el && currentUser) el.textContent = `${currentUser.name} · +${currentUser.phone}`;
+    const prev = document.getElementById('my-avatar-preview');
+    if(prev && currentUser){
+      const photo = userPhotoCache[currentUser.phone];
+      prev.innerHTML = photo ? `<img src="${photo}" alt="">` : currentUser.name.slice(0,1).toUpperCase();
+    }
+  }
+  if(view==='people'){ renderStatusRow(); }
   if(view==='people') renderPeopleList('');
 }
 
@@ -936,7 +1102,7 @@ function renderPeopleList(filter){
     if(!items.length){ list.innerHTML = `<div class="sub">No one found. Ask a friend to create an account too — they'll show up here.</div>`; return; }
     list.innerHTML = items.map(u=>`
       <div class="chat-item">
-        <div class="avatar" style="background:#2BB3A3;">${(u.name||'?').slice(0,1).toUpperCase()}</div>
+        <div class="avatar" style="background:#2BB3A3;">${avatarHtml(u.name, u.phone)}</div>
         <div class="chat-meta"><div class="top"><span class="name">${u.name}</span></div><div class="preview">+${u.phone}</div></div>
         <button class="chip-btn" onclick="addContact('${u.phone}','${u.name.replace(/'/g,"\\'")}')">+ Chat</button>
       </div>`).join('');
@@ -1042,23 +1208,71 @@ function renderChatList(filter=''){
     return;
   }
   list.innerHTML = '';
+  const myId = phoneId(currentUser.phone);
   entries.forEach(([id, c])=>{
     const name = chatDisplayName(c);
     if(filter && !name.toLowerCase().includes(filter.toLowerCase())) return;
     const div = document.createElement('div');
-    div.className = 'chat-item' + (id===currentChat ? ' active':'');
-    div.onclick = ()=>{ if(div.dataset.suppressClick){ delete div.dataset.suppressClick; return; } currentChat=id; renderChatList(document.querySelector('.search input').value); renderChatWindow(); };
+    const locked = isChatLocked(id);
+    const unreadCount = c[`unread_${myId}`] || 0;
+    const isUnread = unreadCount > 0;
+    div.className = 'chat-item' + (id===currentChat ? ' active':'') + (isUnread ? ' unread':'') + (locked ? ' locked':'');
+    div.onclick = ()=>{
+      if(div.dataset.suppressClick){ delete div.dataset.suppressClick; return; }
+      openChatFromList(id);
+    };
     div.oncontextmenu = (e)=>{ e.preventDefault(); openChatListContextMenu(id, name, e.clientX, e.clientY); };
     const time = c.lastMessageAt?.toDate ? c.lastMessageAt.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+    const otherId = c.isGroup ? null : (c.participants||[]).find(p=>p!==myId);
+    const previewText = locked ? '🔒 Locked chat' : (c.lastMessage||'No messages yet').slice(0,60);
     div.innerHTML = `
-      <div class="avatar" style="background:${c.isGroup?'#F2A93B':'#2BB3A3'}">${chatInitials(name)}</div>
+      <div class="avatar" style="background:${c.isGroup?'#F2A93B':'#2BB3A3'}">${avatarHtml(name, otherId)}</div>
       <div class="chat-meta">
-        <div class="top"><span class="name">${name}</span><span class="time">${time}</span></div>
-        <div class="preview">${(c.lastMessage||'No messages yet').slice(0,60)}</div>
-      </div>`;
+        <div class="top"><span class="name">${locked?'🔒 ':''}${name}</span><span class="time">${time}</span></div>
+        <div class="preview">${previewText}</div>
+      </div>
+      ${isUnread ? `<span class="unread-badge">${unreadCount>99?'99+':unreadCount}</span>` : ''}`;
     attachLongPress(div, id, name);
     list.appendChild(div);
   });
+}
+/* Opens a chat, prompting for a password first if it's locked on this
+   device and hasn't been unlocked yet this session. */
+async function openChatFromList(id){
+  if(isChatLocked(id) && !unlockedChatsThisSession.has(id)){
+    const ok = await promptChatUnlock(id);
+    if(!ok) return;
+  }
+  currentChat = id;
+  renderChatList(document.querySelector('.search input').value);
+  renderChatWindow();
+  markChatRead(id);
+}
+function promptChatUnlock(chatId){
+  return new Promise(resolve=>{
+    openModal(`
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <h3>🔒 Locked chat</h3>
+      <div class="sub">Enter the password to open this chat.</div>
+      <input type="password" id="unlock-pass-input" placeholder="Password" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg3); color:var(--text);" onkeydown="if(event.key==='Enter') attemptChatUnlock('${chatId}')">
+      <div id="unlock-error" style="color:var(--coral); font-size:12px; margin-top:6px; min-height:16px;"></div>
+      <button class="btn btn-primary" style="width:100%; margin-top:8px;" onclick="attemptChatUnlock('${chatId}')">Unlock</button>
+    `);
+    window.__unlockResolve = resolve;
+    setTimeout(()=>document.getElementById('unlock-pass-input')?.focus(), 150);
+  });
+}
+async function attemptChatUnlock(chatId){
+  const val = document.getElementById('unlock-pass-input').value;
+  const stored = localStorage.getItem(chatLockKey(chatId));
+  const hash = await sha256Hex(val);
+  if(hash === stored){
+    unlockedChatsThisSession.add(chatId);
+    closeModal();
+    if(window.__unlockResolve){ window.__unlockResolve(true); window.__unlockResolve = null; }
+  } else {
+    document.getElementById('unlock-error').textContent = 'Wrong password, try again.';
+  }
 }
 
 /* ---------------- long-press on a chat in the list: delete without opening it ---------------- */
@@ -1239,7 +1453,7 @@ function renderChatWindow(){
   pane.innerHTML = `
     <div class="chat-header">
       <button class="mobile-back-btn hbtn" onclick="closeMobileChat()" title="Back to chats">←</button>
-      <div class="avatar" style="background:${c.isGroup?'#F2A93B':'#2BB3A3'}">${chatInitials(name)}</div>
+      <div class="avatar" style="background:${c.isGroup?'#F2A93B':'#2BB3A3'}">${avatarHtml(name, c.isGroup?null:(c.participants||[]).find(p=>p!==phoneId(currentUser.phone)))}</div>
       <div class="info"><div class="name">${name}</div><div class="status">${computeStatusText(c)}</div></div>
       ${c.isGroup ? '<button class="hbtn" onclick="openCatchUp()" title="Catch Me Up">⏱️</button>' : '<button class="hbtn" onclick="toggleTranslate()" title="Live Cultural Translation" id="translate-btn">🌐</button>'}
       <button class="hbtn" title="Voice call" onclick="startCall('${currentChat}', false)">📞</button>
@@ -1247,6 +1461,7 @@ function renderChatWindow(){
       <div class="chat-menu-wrap">
         <button class="hbtn" title="Chat options" onclick="toggleChatMenu()">⋮</button>
         <div class="chat-menu" id="chat-menu">
+          <button onclick="toggleChatLockPrompt('${currentChat}')" id="lock-menu-btn">🔒 Lock this chat</button>
           <button onclick="deleteChatForMe()">Delete chat for me</button>
           <button class="danger" onclick="deleteChatForEveryone()">Delete chat for everyone</button>
         </div>
@@ -1262,12 +1477,17 @@ function renderChatWindow(){
         <button class="icon-btn" title="AI emoji suggestions for this conversation" onclick="toggleStickerPanel()">🎨</button>
         <button class="icon-btn" title="Send a photo" onclick="triggerImagePick()">🖼️</button>
         <input type="file" id="image-input" accept="image/*" style="display:none" onchange="handleImagePick(event)">
+        <button class="icon-btn" title="Send a document" onclick="triggerDocPick()">📎</button>
+        <input type="file" id="doc-input" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none" onchange="handleDocPick(event)">
+        <button class="icon-btn" title="Share live location" onclick="shareLiveLocation()">📍</button>
         <textarea id="compose-input" rows="1" placeholder="Message ${name}" oninput="onComposeInput(this)" onkeydown="onComposeKey(event)"></textarea>
         <button class="icon-btn send-btn" title="Send" onclick="sendMessage()">➤</button>
       </div>
       <div class="sticker-panel" id="sticker-panel"></div>
     </div>`;
   subscribeToMessages(currentChat);
+  markChatRead(currentChat);
+  refreshLockMenuLabel(currentChat);
   if(!c.isGroup) renderSmartReplies();
   stopPresenceTracking();
   if(!c.isGroup){
@@ -1278,6 +1498,78 @@ function renderChatWindow(){
   }
 }
 function toggleChatMenu(){ document.getElementById('chat-menu').classList.toggle('show'); }
+/* Resets the unread counter for the person currently viewing this chat.
+   Uses a flat field name (unread_<phoneId>) rather than a nested map,
+   since set({...}, {merge:true}) treats dotted keys as literal field
+   names rather than nested paths (see the note near markTyping above). */
+function markChatRead(chatId){
+  if(!firebaseReady || !chatId) return;
+  const myId = phoneId(currentUser.phone);
+  db.collection('chats').doc(chatId).set({ [`unread_${myId}`]: 0 }, { merge:true }).catch(()=>{});
+  if(myChats[chatId]) myChats[chatId][`unread_${myId}`] = 0;
+}
+/* Bumps the unread counter for every participant except the sender.
+   Called after any new message (text, photo, document, or location). */
+async function bumpUnreadForOthers(chatId){
+  const c = myChats[chatId];
+  if(!c) return;
+  const myId = phoneId(currentUser.phone);
+  const others = (c.participants||[]).filter(p=>p!==myId);
+  if(!others.length) return;
+  const update = {};
+  others.forEach(p=> update[`unread_${p}`] = firebase.firestore.FieldValue.increment(1));
+  await db.collection('chats').doc(chatId).set(update, { merge:true }).catch(()=>{});
+}
+function refreshLockMenuLabel(chatId){
+  const btn = document.getElementById('lock-menu-btn');
+  if(!btn) return;
+  btn.textContent = isChatLocked(chatId) ? '🔓 Remove chat lock' : '🔒 Lock this chat';
+}
+/* Client-side chat lock: sets or removes a password hash in localStorage
+   for this one browser/device. Not end-to-end encryption — see the note
+   near unlockedChatsThisSession above. */
+function toggleChatLockPrompt(chatId){
+  toggleChatMenu();
+  if(isChatLocked(chatId)){
+    openModal(`
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <h3>🔓 Remove chat lock</h3>
+      <div class="sub">Enter the current password to remove the lock.</div>
+      <input type="password" id="lock-remove-pass" placeholder="Current password" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg3); color:var(--text);">
+      <div id="lock-error" style="color:var(--coral); font-size:12px; margin-top:6px; min-height:16px;"></div>
+      <button class="btn btn-primary" style="width:100%; margin-top:8px; background:var(--coral);" onclick="removeChatLock('${chatId}')">Remove lock</button>
+    `);
+  } else {
+    openModal(`
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <h3>🔒 Lock this chat</h3>
+      <div class="sub">Set a password to hide this chat's preview and require it to reopen — on this device only. This does not encrypt the conversation, and won't apply on other devices you log in on.</div>
+      <input type="password" id="lock-set-pass" placeholder="Choose a password" style="width:100%; margin-bottom:8px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg3); color:var(--text);">
+      <input type="password" id="lock-set-pass2" placeholder="Confirm password" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg3); color:var(--text);">
+      <div id="lock-error" style="color:var(--coral); font-size:12px; margin-top:6px; min-height:16px;"></div>
+      <button class="btn btn-primary" style="width:100%; margin-top:8px;" onclick="setChatLock('${chatId}')">Lock chat</button>
+    `);
+  }
+}
+async function setChatLock(chatId){
+  const p1 = document.getElementById('lock-set-pass').value;
+  const p2 = document.getElementById('lock-set-pass2').value;
+  if(!p1 || p1.length<4){ document.getElementById('lock-error').textContent = 'Use at least 4 characters.'; return; }
+  if(p1 !== p2){ document.getElementById('lock-error').textContent = "Passwords don't match."; return; }
+  localStorage.setItem(chatLockKey(chatId), await sha256Hex(p1));
+  unlockedChatsThisSession.add(chatId);
+  closeModal();
+  renderChatList(document.querySelector('.search input')?.value||'');
+}
+async function removeChatLock(chatId){
+  const val = document.getElementById('lock-remove-pass').value;
+  const stored = localStorage.getItem(chatLockKey(chatId));
+  if((await sha256Hex(val)) !== stored){ document.getElementById('lock-error').textContent = 'Wrong password.'; return; }
+  localStorage.removeItem(chatLockKey(chatId));
+  unlockedChatsThisSession.delete(chatId);
+  closeModal();
+  renderChatList(document.querySelector('.search input')?.value||'');
+}
 function closeMobileChat(){ document.getElementById('app').classList.remove('mobile-chat-open'); }
 document.addEventListener('click', (e)=>{
   const menu = document.getElementById('chat-menu');
@@ -1372,9 +1664,30 @@ function subscribeToMessages(chatId){
         row.className = 'msg-row ' + (mine ? 'out':'in');
         const t = m.sentAt?.toDate ? m.sentAt.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'sending…';
         const senderLabel = (c && c.isGroup && !mine) ? `<b style="font-size:11.5px; display:block; color:var(--teal); margin-bottom:2px;">${(c.participantNames||{})[m.from]||m.from}</b>` : '';
-        const body = m.deletedForEveryone ? `<i>This message was deleted</i>`
-          : m.imageUrl ? `<img src="${escapeHtml(m.imageUrl)}" class="msg-image" alt="Photo" onclick="openImageViewer('${attrStr(m.imageUrl)}')">`
-          : escapeHtml(m.text);
+        let body;
+        if(m.deletedForEveryone){
+          body = `<i>This message was deleted</i>`;
+        } else if(m.imageUrl){
+          body = `<img src="${escapeHtml(m.imageUrl)}" class="msg-image" alt="Photo" onclick="openImageViewer('${attrStr(m.imageUrl)}')">`;
+        } else if(m.fileData){
+          body = `<div class="msg-doc" data-doc-id="${doc.id}" data-file-data="${m.fileData}" data-file-type="${escapeHtml(m.fileType||'')}" data-file-name="${escapeHtml(m.fileName||'file')}" onclick="downloadDoc('${doc.id}')" style="cursor:pointer;">
+              <div class="ico">📄</div>
+              <div class="meta"><div class="fn">${escapeHtml(m.fileName||'Document')}</div><div class="fs">${formatFileSize(m.fileSize)} · tap to download</div></div>
+            </div>`;
+        } else if(m.isLiveLocation){
+          const hasFix = m.lat != null && m.lng != null;
+          const stopBtn = (mine && m.liveLocationActive) ? `<button class="chip-btn ghost" style="margin-top:4px;" onclick="stopLiveLocation()">Stop sharing</button>` : '';
+          body = `<div class="msg-location">
+              ${hasFix ? locationEmbedHtml(m.lat, m.lng) : '<div style="padding:30px; text-align:center; font-size:12px; color:var(--text-dim);">Getting location…</div>'}
+              <div class="loc-foot">
+                ${m.liveLocationActive ? `<span class="loc-live-dot"></span>Live location` : '📍 Location (sharing ended)'}
+                ${hasFix ? `<br><a href="https://www.google.com/maps?q=${m.lat},${m.lng}" target="_blank" rel="noopener">Open in Maps</a>` : ''}
+                ${stopBtn}
+              </div>
+            </div>`;
+        } else {
+          body = escapeHtml(m.text);
+        }
         const delBtn = m.deletedForEveryone ? '' : `<button class="msg-del-btn" title="Delete" onclick="openMessageActions('${chatId}','${doc.id}', ${mine})">🗑</button>`;
         row.innerHTML = `<div class="bubble ${m.imageUrl?'has-image':''} ${m.flagged?'flagged':''} ${m.deletedForEveryone?'deleted':''}">${senderLabel}${body}<div class="t">${t}${delBtn}</div></div>`;
         if(!m.deletedForEveryone) attachMessageLongPress(row, chatId, doc.id, mine);
@@ -1533,6 +1846,7 @@ async function sendMessage(){
       lastMessage: val, lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
       hiddenFor: [],
     }, { merge:true });
+    await bumpUnreadForOthers(currentChat);
   } catch(e) {
     console.error('send failed', e);
     alert("Message couldn't be sent — check your Firebase connection.");
@@ -1582,6 +1896,7 @@ async function handleImagePick(e){
       lastMessage: '📷 Photo', lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
       hiddenFor: [],
     }, { merge:true });
+    await bumpUnreadForOthers(chatId);
   } catch(err) {
     console.error('image send failed', err);
     alert("Couldn't send that photo — check your ImgBB API key and internet connection.");
@@ -1604,6 +1919,114 @@ function openImageViewer(url){
   openModal(`
     <button class="modal-close" onclick="closeModal()">✕</button>
     <div class="image-viewer"><img src="${url}" alt="Photo"></div>`);
+}
+
+/* ---------------- document sharing (PDF/Word/etc). ImgBB only hosts
+   images, so documents are embedded directly in the Firestore message
+   as base64. Firestore caps a document at 1MB, so files are limited to
+   ~700KB here to leave headroom for the rest of the message fields —
+   fine for most PDFs/Word docs, but not for large files. ---------------- */
+const MAX_DOC_BYTES = 700 * 1024;
+function triggerDocPick(){ document.getElementById('doc-input')?.click(); }
+async function handleDocPick(e){
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if(!file || !currentChat) return;
+  if(file.size > MAX_DOC_BYTES){
+    alert(`That file is ${(file.size/1024/1024).toFixed(1)}MB — this app can only send documents up to ~700KB (they're embedded directly in the message). For larger files, share a link instead (e.g. Google Drive).`);
+    return;
+  }
+  if(!firebaseReady){ alert("Connect Firebase first — see FIREBASE_CONFIG — document sharing needs it."); return; }
+  const chatId = currentChat;
+  const box = document.getElementById('messages-box');
+  const tempId = 'up-' + Date.now();
+  if(box){
+    const row = document.createElement('div');
+    row.className = 'msg-row out'; row.id = tempId;
+    row.innerHTML = `<div class="bubble"><i>Sending ${escapeHtml(file.name)}…</i></div>`;
+    box.appendChild(row); box.scrollTop = box.scrollHeight;
+  }
+  try {
+    const base64 = await fileToBase64(file);
+    await db.collection('chats').doc(chatId).collection('messages').add({
+      from: phoneId(currentUser.phone), text: '',
+      fileData: base64, fileName: file.name, fileType: file.type || 'application/octet-stream', fileSize: file.size,
+      sentAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    await db.collection('chats').doc(chatId).set({
+      lastMessage: `📄 ${file.name}`, lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+      hiddenFor: [],
+    }, { merge:true });
+    await bumpUnreadForOthers(chatId);
+  } catch(err) {
+    console.error('document send failed', err);
+    alert("Couldn't send that document — it may be too large, or check your internet connection.");
+  } finally {
+    const el = document.getElementById(tempId);
+    if(el) el.remove();
+  }
+}
+function formatFileSize(bytes){
+  if(!bytes) return '';
+  if(bytes < 1024) return bytes + ' B';
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(0) + ' KB';
+  return (bytes/1024/1024).toFixed(1) + ' MB';
+}
+function downloadDoc(msgId){
+  const box = document.getElementById('messages-box');
+  const el = box?.querySelector(`[data-doc-id="${msgId}"]`);
+  if(!el) return;
+  const a = document.createElement('a');
+  a.href = `data:${el.dataset.fileType};base64,${el.dataset.fileData}`;
+  a.download = el.dataset.fileName;
+  a.click();
+}
+
+/* ---------------- live location sharing. Uses the browser Geolocation
+   API — this only works while Saarthi's tab/app stays open in the
+   foreground (or backgrounded briefly on mobile); it is not a background
+   tracking service, since browsers deliberately don't allow that without
+   a native app and explicit "always allow" permission. Position updates
+   are written to the same message doc every time the browser reports a
+   change, for up to LIVE_LOCATION_MS, then sharing automatically stops. */
+const LIVE_LOCATION_MS = 15 * 60 * 1000; // 15 minutes
+let liveLocationWatchId = null, liveLocationMsgRef = null, liveLocationTimer = null;
+function shareLiveLocation(){
+  if(!currentChat) return;
+  if(liveLocationWatchId !== null){ alert("You're already sharing live location in this chat. Stop it from your own message bubble first."); return; }
+  if(!navigator.geolocation){ alert("This browser doesn't support location sharing."); return; }
+  if(!firebaseReady){ alert("Connect Firebase first (see FIREBASE_CONFIG) — location sharing needs it."); return; }
+  if(!confirm("Share your live location for 15 minutes? Anyone in this chat will be able to see it update in real time.")) return;
+  const chatId = currentChat;
+  db.collection('chats').doc(chatId).collection('messages').add({
+    from: phoneId(currentUser.phone), text: '', isLiveLocation: true, liveLocationActive: true,
+    lat: null, lng: null, sentAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  }).then(ref=>{
+    liveLocationMsgRef = ref;
+    db.collection('chats').doc(chatId).set({
+      lastMessage: '📍 Live location', lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(), hiddenFor: [],
+    }, { merge:true });
+    bumpUnreadForOthers(chatId);
+    liveLocationWatchId = navigator.geolocation.watchPosition(pos=>{
+      ref.set({ lat: pos.coords.latitude, lng: pos.coords.longitude, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true }).catch(()=>{});
+    }, err=>{
+      console.warn('geolocation error', err);
+      if(err.code === 1) alert("Location permission was denied — allow it in your browser's site settings to share live location.");
+    }, { enableHighAccuracy:true, maximumAge:5000, timeout:15000 });
+    liveLocationTimer = setTimeout(stopLiveLocation, LIVE_LOCATION_MS);
+  }).catch(e=>{ console.error('live location start failed', e); alert("Couldn't start sharing your location — check your connection."); });
+}
+function stopLiveLocation(){
+  if(liveLocationWatchId !== null){ navigator.geolocation.clearWatch(liveLocationWatchId); liveLocationWatchId = null; }
+  if(liveLocationTimer){ clearTimeout(liveLocationTimer); liveLocationTimer = null; }
+  if(liveLocationMsgRef) liveLocationMsgRef.set({ liveLocationActive:false }, { merge:true }).catch(()=>{});
+  liveLocationMsgRef = null;
+}
+function locationEmbedHtml(lat, lng){
+  const d = 0.01;
+  const bbox = `${lng-d},${lat-d},${lng+d},${lat+d}`;
+  return `<iframe loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&marker=${lat},${lng}" title="Live location map"></iframe>`;
 }
 
 /* ---------------- smart replies (real, based on the real last message) ---------------- */
@@ -1821,26 +2244,39 @@ function listenForIncomingCalls(){
     }, err=>console.error('call listener error', err));
 }
 function showIncomingCallToast(callId, call){
-  const toast = document.createElement('div');
-  toast.className='toast'; toast.id='incoming-'+callId;
-  toast.innerHTML = `<b>📞 Incoming ${call.video?'video':'voice'} call</b><p>${call.fromName||'Someone'} is calling you.</p>
-    <div class="row">
-      <button class="chip-btn" onclick="answerCall('${callId}'); this.closest('.toast').remove();">Accept</button>
-      <button class="chip-btn ghost" onclick="declineCall('${callId}'); this.closest('.toast').remove();">Decline</button>
+  const root = document.getElementById('incoming-call-root');
+  const fromPhone = call.from;
+  root.innerHTML = `
+    <div class="incoming-call-overlay" id="incoming-${callId}">
+      <div class="ico-kind">Incoming ${call.video?'video':'voice'} call</div>
+      <div class="ico-avatar" style="background:${call.video?'#F2A93B':'#2BB3A3'}">${avatarHtml(call.fromName, fromPhone)}</div>
+      <div class="ico-name">${escapeHtml(call.fromName||'Someone')}</div>
+      <div class="ico-actions">
+        <button class="ico-btn decline" onclick="declineCall('${callId}'); clearIncomingCallOverlay('${callId}');">
+          <div class="circle">✕</div>Decline
+        </button>
+        <button class="ico-btn accept" onclick="answerCall('${callId}'); clearIncomingCallOverlay('${callId}');">
+          <div class="circle">📞</div>Accept
+        </button>
+      </div>
     </div>`;
-  document.body.appendChild(toast);
+  if(navigator.vibrate) navigator.vibrate([300,150,300,150,300]);
   startRingtone('incoming');
-  // Stop ringing (and clear the toast) the moment the call stops being 'ringing' —
-  // covers accept/decline here, and the caller cancelling before we respond.
+  // Stop ringing (and clear the overlay) the moment the call stops being
+  // 'ringing' — covers accept/decline here, and the caller cancelling
+  // before we respond.
   const watcher = db.collection('calls').doc(callId).onSnapshot(snap=>{
     const d = snap.data();
     if(!d || d.status !== 'ringing'){
       stopRingtone();
       watcher();
-      const t = document.getElementById('incoming-'+callId);
-      if(t) t.remove();
+      clearIncomingCallOverlay(callId);
     }
   });
+}
+function clearIncomingCallOverlay(callId){
+  const el = document.getElementById('incoming-'+callId);
+  if(el) el.remove();
 }
 async function declineCall(callId){
   stopRingtone();
@@ -2052,7 +2488,7 @@ function renderCalls(){
     const safeName = String(otherName).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return `
       <div class="chat-item">
-        <div class="avatar" style="background:${call.video?'#F2A93B':'#2BB3A3'}">${chatInitials(otherName)}</div>
+        <div class="avatar" style="background:${call.video?'#F2A93B':'#2BB3A3'}">${avatarHtml(otherName, otherId)}</div>
         <div class="chat-meta" style="cursor:pointer;" onclick="callBackFrom('${otherId}', '${safeName}', false)">
           <div class="top"><span class="name">${escapeHtml(otherName)}</span><span class="time">${time}</span></div>
           <div class="preview" style="${missedColor}">${typeIcon} ${dirIcon} ${statusLabel}</div>
@@ -2075,6 +2511,176 @@ async function callBackFrom(otherId, otherName, video){
     });
   }
   startCall(chatId, video);
+}
+
+/* ================================================================
+   STATUS (photo / video / link, visible 24h, then gone)
+   Stored in a flat 'statuses' collection; visibility is limited in the
+   client query+filter to people you already have a chat with, plus your
+   own. "Expiry" is done by only ever querying/showing statuses created
+   in the last 24h — older ones are simply never fetched or rendered
+   again (and best-effort deleted the next time you load the People tab).
+   ================================================================ */
+let statusesUnsub = null;
+let myStatuses = {}; // from -> array of status docs, sorted oldest->newest
+const STATUS_WINDOW_MS = 24*60*60*1000;
+function listenToStatuses(){
+  if(!firebaseReady) return;
+  if(statusesUnsub) statusesUnsub();
+  const since = new Date(Date.now() - STATUS_WINDOW_MS);
+  statusesUnsub = db.collection('statuses').where('createdAt','>', since)
+    .onSnapshot(snap=>{
+      myStatuses = {};
+      snap.forEach(d=>{
+        const s = d.data(); s.id = d.id;
+        (myStatuses[s.from] ||= []).push(s);
+      });
+      Object.values(myStatuses).forEach(arr=>arr.sort((a,b)=>(a.createdAt?.toMillis?.()||0)-(b.createdAt?.toMillis?.()||0)));
+      renderStatusRow();
+      cleanupExpiredStatuses();
+    }, err=>console.error('statuses listener error', err));
+}
+async function cleanupExpiredStatuses(){
+  // Best-effort tidy-up of your own expired statuses; harmless if it fails or races.
+  if(!firebaseReady || !currentUser) return;
+  const myId = phoneId(currentUser.phone);
+  try {
+    const cutoff = new Date(Date.now() - STATUS_WINDOW_MS);
+    const snap = await db.collection('statuses').where('from','==', myId).where('createdAt','<=', cutoff).get();
+    snap.forEach(d=>d.ref.delete().catch(()=>{}));
+  } catch(e) { /* non-fatal, e.g. missing composite index */ }
+}
+function renderStatusRow(){
+  const row = document.getElementById('status-row');
+  if(!row || !currentUser) return;
+  const myId = phoneId(currentUser.phone);
+  const chattedWith = new Set();
+  Object.values(myChats).forEach(c=> (c.participants||[]).forEach(p=>{ if(p!==myId) chattedWith.add(p); }));
+  const visibleFroms = Object.keys(myStatuses).filter(f=> f===myId || chattedWith.has(f));
+  let html = `
+    <div class="story" onclick="triggerStatusUpload()">
+      <div class="status-add">➕</div><span>Add status</span>
+    </div>`;
+  visibleFroms.forEach(from=>{
+    const arr = myStatuses[from];
+    const last = arr[arr.length-1];
+    const name = from===myId ? 'You' : (last.fromName || ('+'+from));
+    html += `
+      <div class="story" onclick="viewStatusFor('${from}')">
+        <div class="ring"><div class="inner avatar" style="background:#2BB3A3;">${avatarHtml(name, from)}</div></div>
+        <span>${escapeHtml(name)}</span>
+      </div>`;
+  });
+  row.innerHTML = html;
+}
+function triggerStatusUpload(){
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>Add to your status</h3>
+    <div class="sub">Visible to your contacts for 24 hours.</div>
+    <button class="btn btn-primary" style="width:100%; margin-bottom:8px;" onclick="closeModal(); document.getElementById('status-file-input').click();">🖼️ Photo or video</button>
+    <button class="btn btn-ghost" style="width:100%;" onclick="promptLinkStatus()">🔗 Link</button>
+  `);
+}
+function promptLinkStatus(){
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>Share a link status</h3>
+    <input id="status-link-input" placeholder="https://…" style="width:100%; margin:8px 0; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg3); color:var(--text);">
+    <div id="status-error" style="color:var(--coral); font-size:12px; min-height:16px;"></div>
+    <button class="btn btn-primary" style="width:100%; margin-top:6px;" onclick="submitLinkStatus()">Post</button>
+  `);
+}
+async function submitLinkStatus(){
+  const url = document.getElementById('status-link-input').value.trim();
+  if(!/^https?:\/\//i.test(url)){ document.getElementById('status-error').textContent = 'Enter a valid link starting with http(s)://'; return; }
+  if(!firebaseReady){ alert("Connect Firebase first (see FIREBASE_CONFIG)."); return; }
+  await db.collection('statuses').add({
+    from: phoneId(currentUser.phone), fromName: currentUser.name, type:'link', url,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  });
+  closeModal();
+}
+const MAX_STATUS_VIDEO_BYTES = 700*1024;
+async function handleStatusFile(e){
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  if(!firebaseReady){ alert("Connect Firebase first (see FIREBASE_CONFIG)."); return; }
+  const isVideo = file.type.startsWith('video/');
+  const isImage = file.type.startsWith('image/');
+  if(!isVideo && !isImage){ alert('Please choose an image or video file.'); return; }
+  try {
+    if(isImage){
+      if(!imgbbConfigured()){ alert("Add a free ImgBB API key first — see CONFIG #3 (IMGBB_API_KEY)."); return; }
+      const base64 = await fileToBase64(file);
+      const form = new FormData(); form.append('key', IMGBB_API_KEY); form.append('image', base64);
+      const res = await fetch('https://api.imgbb.com/1/upload', { method:'POST', body: form });
+      const data = await res.json();
+      if(!data || !data.success) throw new Error(data?.error?.message || 'ImgBB upload failed');
+      await db.collection('statuses').add({
+        from: phoneId(currentUser.phone), fromName: currentUser.name, type:'photo', url: data.data.url,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    } else {
+      if(file.size > MAX_STATUS_VIDEO_BYTES){ alert(`This app can only post videos up to ~700KB as a status (they're embedded directly). For longer clips, share a link to it instead.`); return; }
+      const base64 = await fileToBase64(file);
+      await db.collection('statuses').add({
+        from: phoneId(currentUser.phone), fromName: currentUser.name, type:'video',
+        videoData: base64, videoType: file.type,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+  } catch(err){
+    console.error('status upload failed', err);
+    alert("Couldn't post that status — check your connection and API keys.");
+  }
+}
+let statusViewerState = null;
+function viewStatusFor(from){
+  const arr = myStatuses[from];
+  if(!arr || !arr.length) return;
+  statusViewerState = { from, idx: 0 };
+  renderStatusViewer();
+}
+function renderStatusViewer(){
+  const root = document.getElementById('status-viewer-root');
+  if(!statusViewerState){ root.innerHTML=''; return; }
+  const arr = myStatuses[statusViewerState.from];
+  if(!arr || !arr[statusViewerState.idx]){ closeStatusViewer(); return; }
+  const s = arr[statusViewerState.idx];
+  const name = s.fromName || ('+'+s.from);
+  let content;
+  if(s.type === 'photo') content = `<img src="${escapeHtml(s.url)}" alt="Status">`;
+  else if(s.type === 'video') content = `<video src="data:${s.videoType};base64,${s.videoData}" autoplay controls></video>`;
+  else content = `<div class="link-card">🔗<br><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener" style="color:var(--marigold);">${escapeHtml(s.url)}</a></div>`;
+  const bars = arr.map((_,i)=>`<div class="bar" style="position:static; flex:1; margin:0 2px;"><div class="fill" id="status-fill-${i}" style="width:${i<statusViewerState.idx?'100%':'0%'}"></div></div>`).join('');
+  root.innerHTML = `
+    <div class="status-viewer" onclick="advanceStatus(event)">
+      <div style="position:absolute; top:10px; left:10px; right:10px; display:flex;">${bars}</div>
+      <div class="head"><div class="avatar" style="width:28px;height:28px;font-size:12px;background:#2BB3A3;">${avatarHtml(name, s.from)}</div>${escapeHtml(name)}</div>
+      <button class="close-x" onclick="event.stopPropagation(); closeStatusViewer();">✕</button>
+      <div class="content" onclick="event.stopPropagation();">${content}</div>
+    </div>`;
+  clearTimeout(window.__statusTimer);
+  const dur = s.type === 'video' ? null : 5000;
+  if(dur){
+    const fill = document.getElementById(`status-fill-${statusViewerState.idx}`);
+    if(fill){ fill.style.transition = `width ${dur}ms linear`; requestAnimationFrame(()=> fill.style.width='100%'); }
+    window.__statusTimer = setTimeout(()=>nextStatus(), dur);
+  }
+}
+function advanceStatus(e){ nextStatus(); }
+function nextStatus(){
+  if(!statusViewerState) return;
+  const arr = myStatuses[statusViewerState.from];
+  if(statusViewerState.idx < arr.length-1){ statusViewerState.idx++; renderStatusViewer(); }
+  else closeStatusViewer();
+}
+function closeStatusViewer(){
+  clearTimeout(window.__statusTimer);
+  statusViewerState = null;
+  document.getElementById('status-viewer-root').innerHTML = '';
 }
 
 /* ---------------- greeting assistant (general-purpose, real) ---------------- */
@@ -2107,7 +2713,10 @@ function toggleSwitch(el){ el.classList.toggle('on'); if(el.id==='typing-indicat
 
 /* ---------------- modal helpers ---------------- */
 function openModal(html){ document.getElementById('modal-body').innerHTML = html; document.getElementById('modal-backdrop').classList.add('show'); }
-function closeModal(){ document.getElementById('modal-backdrop').classList.remove('show'); }
+function closeModal(){
+  document.getElementById('modal-backdrop').classList.remove('show');
+  if(window.__unlockResolve){ window.__unlockResolve(false); window.__unlockResolve = null; }
+}
 document.getElementById('modal-backdrop').addEventListener('click', e=>{ if(e.target.id==='modal-backdrop') closeModal(); });
 
 /* ---------------- wellbeing nudge (based on real elapsed session time) ---------------- */
