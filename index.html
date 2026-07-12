@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --marigold:#F2A93B; --marigold-dim:#c98f2c; --teal:#2BB3A3; --coral:#E8604C;
+  --marigold:#F2A93B; --marigold-dim:#c98f2c; --teal:#2BB3A3; --coral:#E8604C; --seen-blue:#53BDEB;
   --radius:16px;
 }
 [data-theme="light"]{
@@ -171,6 +171,15 @@ button{font-family:inherit; cursor:pointer;}
 .msg-del-btn:hover{ opacity:1 !important; }
 .msg-row.pressed .bubble{ opacity:.65; transition:opacity .1s ease; }
 .bubble.deleted{ font-style:italic; opacity:.6; }
+.msg-ticks{ display:inline-flex; align-items:center; }
+.msg-ticks svg{ display:block; }
+.msg-ticks svg path{ fill:currentColor; }
+.msg-ticks.seen svg path{ fill:var(--seen-blue); }
+.date-divider{ align-self:center; margin:14px 0; background:var(--bg3); color:var(--text-dim); font-size:11.5px; font-weight:700; padding:4px 14px; border-radius:20px; box-shadow:var(--shadow); }
+.vo-bubble{ display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; padding:2px 2px; }
+.vo-bubble.vo-tap{ cursor:pointer; color:var(--marigold); }
+.msg-row.in .vo-bubble.vo-tap{ color:var(--teal); }
+.vo-bubble.vo-gone, .vo-bubble.vo-sent{ opacity:.65; font-style:italic; font-weight:500; }
 .chat-menu-wrap{ position:relative; }
 .chat-menu{
   position:absolute; top:44px; right:0; background:var(--bg2); border:1px solid var(--border); border-radius:12px;
@@ -273,6 +282,11 @@ button{font-family:inherit; cursor:pointer;}
 .caption-ticker{position:absolute; bottom:10px; left:10px; right:10px; background:rgba(0,0,0,.5); color:#fff; font-size:12px; padding:6px 10px; border-radius:8px;}
 .call-actions{display:flex; gap:10px; justify-content:center; margin-top:14px;}
 .call-actions button{width:46px; height:46px; border-radius:50%; border:none; font-size:17px;}
+.end-call-btn{
+  width:auto !important; height:48px !important; border-radius:24px !important; padding:0 24px; display:flex; align-items:center; gap:8px;
+  font-size:14px !important; font-weight:800; font-family:inherit; letter-spacing:.2px; cursor:pointer;
+  box-shadow:0 6px 18px rgba(232,96,76,.35);
+}
 .summary-card{background:var(--bg3); border-radius:12px; padding:14px 16px; margin-top:12px; font-size:13px;}
 
 .status-grid{padding:20px 24px; overflow-y:auto;}
@@ -387,7 +401,20 @@ button{font-family:inherit; cursor:pointer;}
 .status-viewer .content{ max-width:92vw; max-height:78vh; }
 .status-viewer .content img, .status-viewer .content video{ max-width:92vw; max-height:78vh; border-radius:8px; }
 .status-viewer .close-x{ position:absolute; top:20px; right:14px; background:none; border:none; color:#fff; font-size:20px; }
+.status-viewer .delete-x{ position:absolute; top:20px; right:50px; background:none; border:none; color:#fff; font-size:17px; opacity:.9; }
+.status-viewer .delete-x:hover{ opacity:1; }
 .status-viewer .link-card{ background:#1C2740; color:#F6F1E8; padding:24px; border-radius:14px; max-width:80vw; word-break:break-all; text-align:center; }
+
+/* ---------- view-once photo viewer ---------- */
+.vo-viewer{ position:fixed; inset:0; z-index:930; background:#000; display:flex; align-items:center; justify-content:center; flex-direction:column; }
+.vo-viewer .content{ max-width:92vw; max-height:78vh; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+.vo-viewer .content img{ max-width:92vw; max-height:78vh; border-radius:8px; display:block; pointer-events:none; }
+.vo-viewer .close-x{ position:absolute; top:20px; right:14px; background:none; border:none; color:#fff; font-size:20px; }
+.vo-viewer .foot{ position:absolute; bottom:26px; left:14px; right:14px; text-align:center; color:#c7cfe0; font-size:12px; }
+.vo-blackout{ position:absolute; inset:0; background:#000; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px; text-align:center; padding:0 30px; z-index:2; }
+.vo-blackout .ico{ font-size:34px; }
+.vo-blackout .msg{ color:#fff; font-size:14px; font-weight:700; }
+.vo-blackout .sub{ color:#8D96AC; font-size:12px; }
 
 /* ---------- document message bubble ---------- */
 .msg-doc{ display:flex; align-items:center; gap:10px; padding:6px 4px; }
@@ -644,6 +671,7 @@ button{font-family:inherit; cursor:pointer;}
 </div>
 <div id="incoming-call-root"></div>
 <div id="status-viewer-root"></div>
+<div id="vo-viewer-root"></div>
 
 <!-- Firebase powers real accounts, real-time messages, and call signaling
      between everyone using this app. It needs its own free project config
@@ -1475,7 +1503,8 @@ function renderChatWindow(){
       <div class="composer-row">
         <button class="icon-btn" title="Emoji" onclick="toggleEmojiPicker()">😀</button>
         <button class="icon-btn" title="AI emoji suggestions for this conversation" onclick="toggleStickerPanel()">🎨</button>
-        <button class="icon-btn" title="Send a photo" onclick="triggerImagePick()">🖼️</button>
+        <button class="icon-btn" title="Send a photo" onclick="triggerImagePick(false)">🖼️</button>
+        <button class="icon-btn" title="Send a view-once photo (disappears after it's opened)" onclick="triggerImagePick(true)">🔥</button>
         <input type="file" id="image-input" accept="image/*" style="display:none" onchange="handleImagePick(event)">
         <button class="icon-btn" title="Send a document" onclick="triggerDocPick()">📎</button>
         <input type="file" id="doc-input" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none" onchange="handleDocPick(event)">
@@ -1654,19 +1683,42 @@ function subscribeToMessages(chatId){
       box.innerHTML = '';
       const c = myChats[chatId];
       const myId = phoneId(currentUser.phone);
+      const otherParticipants = (c && c.participants || []).filter(p=>p!==myId);
       let lastIncoming = null;
+      let lastDateKey = null;
+      const toSeen = []; // doc refs of incoming messages I haven't marked as seen yet
       snap.forEach(doc=>{
         const m = doc.data();
         if((m.deletedFor||[]).includes(myId)) return; // hidden just for me
         const mine = m.from === myId;
         if(!mine) lastIncoming = m;
+        if(!mine && !m.deletedForEveryone && !(m.seenBy||[]).includes(myId)) toSeen.push(doc.ref);
+        const msgDate = m.sentAt?.toDate ? m.sentAt.toDate() : new Date();
+        const dateKey = msgDate.toDateString();
+        if(dateKey !== lastDateKey){
+          const divider = document.createElement('div');
+          divider.className = 'date-divider';
+          divider.textContent = formatDateDivider(msgDate);
+          box.appendChild(divider);
+          lastDateKey = dateKey;
+        }
         const row = document.createElement('div');
         row.className = 'msg-row ' + (mine ? 'out':'in');
         const t = m.sentAt?.toDate ? m.sentAt.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'sending…';
+        const seen = otherParticipants.length>0 && otherParticipants.every(p=>(m.seenBy||[]).includes(p));
+        const ticks = mine && m.sentAt ? renderTicks(seen) : '';
         const senderLabel = (c && c.isGroup && !mine) ? `<b style="font-size:11.5px; display:block; color:var(--teal); margin-bottom:2px;">${(c.participantNames||{})[m.from]||m.from}</b>` : '';
         let body;
         if(m.deletedForEveryone){
           body = `<i>This message was deleted</i>`;
+        } else if(m.viewOnce){
+          if(m.viewOnceOpened){
+            body = `<div class="vo-bubble vo-gone">🚫<span>${mine ? 'View once photo · Opened' : 'Photo opened'}</span></div>`;
+          } else if(mine){
+            body = `<div class="vo-bubble vo-sent">🔥<span>View once photo sent</span></div>`;
+          } else {
+            body = `<div class="vo-bubble vo-tap" data-image-url="${escapeHtml(m.imageUrl||'')}" onclick="openViewOncePhoto('${chatId}','${doc.id}', this)">🔥<span>Tap to view photo · View once</span></div>`;
+          }
         } else if(m.imageUrl){
           body = `<img src="${escapeHtml(m.imageUrl)}" class="msg-image" alt="Photo" onclick="openImageViewer('${attrStr(m.imageUrl)}')">`;
         } else if(m.fileData){
@@ -1689,7 +1741,7 @@ function subscribeToMessages(chatId){
           body = escapeHtml(m.text);
         }
         const delBtn = m.deletedForEveryone ? '' : `<button class="msg-del-btn" title="Delete" onclick="openMessageActions('${chatId}','${doc.id}', ${mine})">🗑</button>`;
-        row.innerHTML = `<div class="bubble ${m.imageUrl?'has-image':''} ${m.flagged?'flagged':''} ${m.deletedForEveryone?'deleted':''}">${senderLabel}${body}<div class="t">${t}${delBtn}</div></div>`;
+        row.innerHTML = `<div class="bubble ${m.imageUrl?'has-image':''} ${m.flagged?'flagged':''} ${m.deletedForEveryone?'deleted':''}">${senderLabel}${body}<div class="t">${t}${ticks}${delBtn}</div></div>`;
         if(!m.deletedForEveryone) attachMessageLongPress(row, chatId, doc.id, mine);
         box.appendChild(row);
         if(m.flagged){
@@ -1705,7 +1757,36 @@ function subscribeToMessages(chatId){
       });
       box.scrollTop = box.scrollHeight;
       if(lastIncoming) maybeFlagScam(chatId, lastIncoming);
+      // Mark any newly-visible incoming messages as read by me, but only while
+      // I actually have this chat open (avoids marking things read from the list view).
+      if(toSeen.length && chatId === currentChat){
+        const myIdForSeen = myId;
+        toSeen.forEach(ref=>{
+          ref.update({ seenBy: firebase.firestore.FieldValue.arrayUnion(myIdForSeen) }).catch(()=>{});
+        });
+      }
     }, err=>console.error('messages listener error', err));
+}
+/* Small WhatsApp-style double-check mark shown under a message I sent.
+   Gray = sent, blue = read by the other participant(s). */
+function renderTicks(seen){
+  return `<span class="msg-ticks ${seen?'seen':''}" title="${seen?'Read':'Sent'}">
+    <svg width="15" height="10" viewBox="0 0 16 11" xmlns="http://www.w3.org/2000/svg">
+      <path d="M11.071.653a.5.5 0 0 1 .038.706l-6.5 7.25a.5.5 0 0 1-.735.02L.653 6.128a.5.5 0 1 1 .694-.72l2.867 2.75 6.151-6.865a.5.5 0 0 1 .706-.04z"/>
+      <path d="M15.071.653a.5.5 0 0 1 .038.706l-6.5 7.25a.5.5 0 0 1-.735.02l-1.2-1.15a.5.5 0 1 1 .696-.718l.834.8 6.15-6.866a.5.5 0 0 1 .707-.042z"/>
+    </svg>
+  </span>`;
+}
+/* "Today" / "Yesterday" / weekday / full date banner shown between groups
+   of messages sent on different days, like most chat apps. */
+function formatDateDivider(d){
+  const now = new Date();
+  const startOfDay = x=> new Date(x.getFullYear(), x.getMonth(), x.getDate());
+  const diffDays = Math.round((startOfDay(now) - startOfDay(d)) / 86400000);
+  if(diffDays === 0) return 'Today';
+  if(diffDays === 1) return 'Yesterday';
+  if(diffDays > 1 && diffDays < 7) return d.toLocaleDateString([], {weekday:'long'});
+  return d.toLocaleDateString([], {day:'numeric', month:'long', year: d.getFullYear()!==now.getFullYear() ? 'numeric' : undefined});
 }
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 /* Safe to drop inside onclick="...('${attrStr(x)}')" — escapes backslashes,
@@ -1857,13 +1938,17 @@ async function sendMessage(){
    camera or gallery via the native file/photo picker triggered from inside
    Saarthi) — uploaded to ImgBB (free image host), then sent as a normal
    message with an imageUrl field. ---------------- */
-function triggerImagePick(){
+let pendingViewOncePhoto = false;
+function triggerImagePick(viewOnce){
+  pendingViewOncePhoto = !!viewOnce;
   const inp = document.getElementById('image-input');
   if(inp) inp.click();
 }
 async function handleImagePick(e){
   const file = e.target.files && e.target.files[0];
   e.target.value = ''; // reset so picking the same file twice still fires change
+  const viewOnce = pendingViewOncePhoto;
+  pendingViewOncePhoto = false;
   if(!file || !currentChat) return;
   if(!file.type || !file.type.startsWith('image/')){ alert('Please choose an image file.'); return; }
   const MAX_BYTES = 10 * 1024 * 1024;
@@ -1876,7 +1961,7 @@ async function handleImagePick(e){
   if(box){
     const row = document.createElement('div');
     row.className = 'msg-row out'; row.id = tempId;
-    row.innerHTML = `<div class="bubble"><i>Sending photo…</i></div>`;
+    row.innerHTML = `<div class="bubble"><i>${viewOnce ? 'Sending view-once photo…' : 'Sending photo…'}</i></div>`;
     box.appendChild(row); box.scrollTop = box.scrollHeight;
   }
   try {
@@ -1888,12 +1973,14 @@ async function handleImagePick(e){
     const data = await res.json();
     if(!data || !data.success) throw new Error(data?.error?.message || 'ImgBB upload failed');
     const url = data.data.url;
-    await db.collection('chats').doc(chatId).collection('messages').add({
+    const msgData = {
       from: phoneId(currentUser.phone), text: '', imageUrl: url,
       sentAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
+    };
+    if(viewOnce){ msgData.viewOnce = true; msgData.viewOnceOpened = false; }
+    await db.collection('chats').doc(chatId).collection('messages').add(msgData);
     await db.collection('chats').doc(chatId).set({
-      lastMessage: '📷 Photo', lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+      lastMessage: viewOnce ? '🔥 View once photo' : '📷 Photo', lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
       hiddenFor: [],
     }, { merge:true });
     await bumpUnreadForOthers(chatId);
@@ -1919,6 +2006,65 @@ function openImageViewer(url){
   openModal(`
     <button class="modal-close" onclick="closeModal()">✕</button>
     <div class="image-viewer"><img src="${url}" alt="Photo"></div>`);
+}
+
+/* ---------------- view-once photos: opened at most once, then gone for good.
+   A note on the screenshot-blocking part: no web page can truly stop someone
+   from taking a screenshot (there's no browser permission for that, and OS-level
+   capture tools/another camera pointed at the screen are always possible). What's
+   implemented here is the same best-effort deterrent real chat apps use on the
+   web — the photo blacks out the instant the tab loses focus/visibility (which is
+   what happens when most screenshot/snip tools are invoked) or the PrintScreen key
+   is pressed on desktop, and once that happens the photo is treated as opened and
+   is gone. ---------------- */
+let voViewerActive = false;
+function openViewOncePhoto(chatId, msgId, el){
+  const url = el && el.dataset ? el.dataset.imageUrl : '';
+  if(!url) return; // someone else already opened/cleared it since this row was rendered
+  const root = document.getElementById('vo-viewer-root');
+  if(!root) return;
+  voViewerActive = true;
+  root.innerHTML = `
+    <div class="vo-viewer" id="vo-viewer">
+      <div class="content"><img src="${escapeHtml(url)}" alt="Photo" oncontextmenu="return false" ondragstart="return false"></div>
+      <div class="foot">🔒 View once photo — disappears after you close this, screenshots aren't allowed</div>
+      <button class="close-x" onclick="closeViewOncePhoto()">✕</button>
+    </div>`;
+  document.addEventListener('visibilitychange', voVisibilityHandler);
+  window.addEventListener('blur', voBlurHandler);
+  window.addEventListener('keyup', voKeyHandler);
+  // Marking it opened (and wiping the URL from Firestore) right away, not on close,
+  // is what makes this genuinely "view once" rather than re-openable while the
+  // viewer happens to still be on screen.
+  markViewOnceOpened(chatId, msgId);
+}
+function voVisibilityHandler(){ if(document.hidden) voShowScreenshotBlock(); }
+function voBlurHandler(){ voShowScreenshotBlock(); }
+function voKeyHandler(e){ if(e.key === 'PrintScreen') voShowScreenshotBlock(); }
+function voShowScreenshotBlock(){
+  const viewer = document.getElementById('vo-viewer');
+  if(!viewer || viewer.querySelector('.vo-blackout')) return;
+  const block = document.createElement('div');
+  block.className = 'vo-blackout';
+  block.innerHTML = `<div class="ico">🚫</div><div class="msg">Screenshot of view once photos isn't allowed</div><div class="sub">This photo is gone now.</div>`;
+  viewer.appendChild(block);
+}
+function closeViewOncePhoto(){
+  voViewerActive = false;
+  document.removeEventListener('visibilitychange', voVisibilityHandler);
+  window.removeEventListener('blur', voBlurHandler);
+  window.removeEventListener('keyup', voKeyHandler);
+  const root = document.getElementById('vo-viewer-root');
+  if(root) root.innerHTML = '';
+}
+async function markViewOnceOpened(chatId, msgId){
+  try {
+    await db.collection('chats').doc(chatId).collection('messages').doc(msgId).set({
+      viewOnceOpened: true, viewOnceOpenedBy: phoneId(currentUser.phone),
+      viewOnceOpenedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      imageUrl: firebase.firestore.FieldValue.delete(), // truly gone, not just hidden client-side
+    }, { merge:true });
+  } catch(e){ console.warn('marking view-once photo as opened failed', e); }
 }
 
 /* ---------------- document sharing (PDF/Word/etc). ImgBB only hosts
@@ -2377,7 +2523,7 @@ function openCallModal(otherName, video){
         <div class="caption-ticker" id="caption-line">Connecting…</div>
       </div>
       <div class="call-actions">
-        <button style="background:var(--coral); color:#fff;" onclick="endCall()" title="End call">📵</button>
+        <button class="end-call-btn" style="background:var(--coral); color:#fff;" onclick="endCall()" title="End call">📵 End Call</button>
       </div>
     </div>`);
 }
@@ -2655,10 +2801,13 @@ function renderStatusViewer(){
   else if(s.type === 'video') content = `<video src="data:${s.videoType};base64,${s.videoData}" autoplay controls></video>`;
   else content = `<div class="link-card">🔗<br><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener" style="color:var(--marigold);">${escapeHtml(s.url)}</a></div>`;
   const bars = arr.map((_,i)=>`<div class="bar" style="position:static; flex:1; margin:0 2px;"><div class="fill" id="status-fill-${i}" style="width:${i<statusViewerState.idx?'100%':'0%'}"></div></div>`).join('');
+  const myId = currentUser ? phoneId(currentUser.phone) : null;
+  const deleteBtn = s.from === myId ? `<button class="delete-x" title="Delete this status" onclick="event.stopPropagation(); confirmDeleteStatus('${s.id}');">🗑</button>` : '';
   root.innerHTML = `
     <div class="status-viewer" onclick="advanceStatus(event)">
       <div style="position:absolute; top:10px; left:10px; right:10px; display:flex;">${bars}</div>
       <div class="head"><div class="avatar" style="width:28px;height:28px;font-size:12px;background:#2BB3A3;">${avatarHtml(name, s.from)}</div>${escapeHtml(name)}</div>
+      ${deleteBtn}
       <button class="close-x" onclick="event.stopPropagation(); closeStatusViewer();">✕</button>
       <div class="content" onclick="event.stopPropagation();">${content}</div>
     </div>`;
@@ -2681,6 +2830,44 @@ function closeStatusViewer(){
   clearTimeout(window.__statusTimer);
   statusViewerState = null;
   document.getElementById('status-viewer-root').innerHTML = '';
+}
+/* Lets you remove your own status update (e.g. wrong photo/video posted by
+   mistake) before it expires on its own after 24h. Only ever shown/allowed
+   for statuses you posted yourself — see the s.from===myId check above. */
+function confirmDeleteStatus(id){
+  clearTimeout(window.__statusTimer); // don't let it auto-advance out from under the confirm dialog
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>Delete status</h3>
+    <div class="sub" style="margin-bottom:12px;">This will remove it for everyone who could see it.</div>
+    <button class="btn btn-ghost" style="width:100%; margin-bottom:8px;" onclick="closeModal(); renderStatusViewer();">Cancel</button>
+    <button class="btn btn-primary" style="width:100%; background:var(--coral);" onclick="deleteMyStatus('${id}')">Delete</button>
+  `);
+}
+async function deleteMyStatus(id){
+  closeModal();
+  try {
+    await db.collection('statuses').doc(id).delete();
+  } catch(e){
+    console.error('status delete failed', e);
+    alert("Couldn't delete that status — check your Firebase connection.");
+    return;
+  }
+  // Update local state immediately rather than waiting for the listener round-trip,
+  // so the viewer reacts instantly.
+  if(statusViewerState){
+    const arr = myStatuses[statusViewerState.from];
+    if(arr){
+      const idx = arr.findIndex(s=>s.id===id);
+      if(idx !== -1) arr.splice(idx, 1);
+    }
+    if(!arr || !arr.length) closeStatusViewer();
+    else {
+      if(statusViewerState.idx >= arr.length) statusViewerState.idx = arr.length - 1;
+      renderStatusViewer();
+    }
+  }
+  renderStatusRow();
 }
 
 /* ---------------- greeting assistant (general-purpose, real) ---------------- */
@@ -2717,7 +2904,7 @@ function closeModal(){
   document.getElementById('modal-backdrop').classList.remove('show');
   if(window.__unlockResolve){ window.__unlockResolve(false); window.__unlockResolve = null; }
 }
-document.getElementById('modal-backdrop').addEventListener('click', e=>{ if(e.target.id==='modal-backdrop') closeModal(); });
+document.getElementById('modal-backdrop').addEventListener('click', e=>{ if(e.target.id==='modal-backdrop' && !activeCallId) closeModal(); });
 
 /* ---------------- wellbeing nudge (based on real elapsed session time) ---------------- */
 const WELLBEING_THRESHOLD_MS = 20*60*1000;
